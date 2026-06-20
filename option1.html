@@ -1,0 +1,2851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Event Service Management AI</title>
+  <meta name="description" content="Event service management workspace with AI-assisted stage planning, service capture, and admin review tracking." />
+  <link rel="stylesheet" href="professional-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="event.css" />
+  <style>
+    .stage-review-box {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      background: rgba(8, 12, 24, 0.72);
+      margin-bottom: 12px;
+    }
+
+    .stage-review-box svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-height: 240px;
+    }
+
+    .stage-dimensions {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      z-index: 2;
+      font-weight: 600;
+      font-size: 12px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      pointer-events: none;
+    }
+
+    .stage-3d-controls {
+      display: none;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin: 8px 0 12px;
+      padding: 10px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      color: #e2e8f0;
+    }
+
+    .stage-3d-controls.active {
+      display: grid;
+    }
+
+    .stage-3d-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #7dd3fc;
+    }
+
+    .stage-3d-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stage-3d-row label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #cbd5e1;
+      min-width: 88px;
+    }
+
+    .stage-3d-btn {
+      border: 1px solid rgba(125, 211, 252, 0.45);
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      color: #fff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .stage-3d-btn.secondary {
+      background: linear-gradient(135deg, #334155, #1e293b);
+      border-color: rgba(148, 163, 184, 0.45);
+    }
+
+    .stage-3d-range {
+      flex: 1;
+      min-width: 120px;
+      accent-color: #38bdf8;
+      cursor: pointer;
+    }
+
+    .stage-3d-meta {
+      font-size: 11px;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    #stageReviewSvg {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #stageReviewSvg.dragging {
+      cursor: grabbing;
+    }
+
+    .back-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-weight: 600;
+      transition: transform 0.3s ease;
+    }
+
+    .back-button:hover {
+      transform: scale(1.05);
+    }
+
+    .event-back-corner {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1700;
+    }
+
+    .designer-status,
+    .save-event-status {
+      margin-top: 10px;
+      margin-bottom: 0;
+      font-size: 14px;
+      font-weight: 600;
+      min-height: 20px;
+    }
+
+    .save-event-status {
+      color: #166534;
+    }
+
+    .card-top-preview {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .preview-view-btn {
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+      color: #fff;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .guide-fab {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f7cff, #5f6ddf);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      cursor: pointer;
+      z-index: 1500;
+      border: 3px solid #fff;
+      box-shadow: 0 10px 30px rgba(79, 124, 255, 0.35);
+    }
+
+    .guide-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 1600;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .guide-modal.active {
+      display: flex;
+    }
+
+    .guide-card {
+      width: 100%;
+      max-width: 620px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.2);
+    }
+
+    .guide-head {
+      background: linear-gradient(135deg, #4f7cff, #5f6ddf);
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .guide-close {
+      border: none;
+      background: transparent;
+      color: #fff;
+      font-size: 34px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .guide-body {
+      padding: 22px;
+    }
+
+    .guide-msg {
+      background: #eef1f6;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+
+    .guide-chat-messages {
+      background: #f7f8fb;
+      border: 1px solid #e0e3ea;
+      border-radius: 12px;
+      min-height: 210px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 10px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .guide-chat-line {
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.4;
+      max-width: 92%;
+    }
+
+    .guide-chat-line.bot {
+      background: #eef1f6;
+      color: #2d3440;
+      align-self: flex-start;
+    }
+
+    .guide-chat-line.user {
+      background: #4f7cff;
+      color: #fff;
+      align-self: flex-end;
+    }
+
+    .guide-chat-input {
+      display: flex;
+      gap: 8px;
+    }
+
+    .guide-chat-input input {
+      flex: 1;
+      border: 2px solid #d7d9df;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .guide-chat-input button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #4f7cff, #5f6ddf);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <a href="options.html" class="back-button event-back-corner"><- Back to Options</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">Event AI</div>
+      <nav class="site-nav">
+        <a href="#home">Home</a>
+        <a href="#services">Service Designer</a>
+        <a href="#features">Features</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <a class="btn btn-ghost" href="#services">Get Started</a>
+    </div>
+  </header>
+
+  <section class="hero" id="home">
+    <div class="container hero-inner">
+      <div class="hero-left">
+        <h1>Event Service Management & Stage Planning</h1>
+        <p class="lead">Capture event requirements, map service configuration, and generate visual stage setups in one workflow.</p>
+        <div class="hero-cta">
+          <a class="btn btn-outline" href="#services">Design Service Plan</a>
+          <a class="btn btn-outline" href="#features">See Features</a>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="hero-card">
+          <div class="card-top card-top-preview">
+            <span>Live Preview</span>
+            <button id="livePreviewViewBtn" class="preview-view-btn" type="button">View</button>
+          </div>
+          <div class="card-media">
+            <div id="stageReviewBox" class="stage-review-box" aria-live="polite">
+              <div id="stageDimensionsLabel" class="stage-dimensions">20ft x 10ft</div>
+              <svg id="stageReviewSvg" viewBox="0 0 1000 560" role="img" aria-label="Service stage preview"></svg>
+            </div>
+            <div id="stage3dControls" class="stage-3d-controls" aria-label="3D preview controls">
+              <div class="stage-3d-title">3D Stage Controls</div>
+              <div class="stage-3d-row">
+                <button id="stage3dRotateToggle" class="stage-3d-btn" type="button">Pause Orbit</button>
+                <button id="stage3dResetView" class="stage-3d-btn secondary" type="button">Reset View</button>
+                <span class="stage-3d-meta">Drag on stage to rotate 360 degrees</span>
+              </div>
+              <div class="stage-3d-row">
+                <label for="stage3dZoomRange">Zoom</label>
+                <button id="stage3dZoomOut" class="stage-3d-btn secondary" type="button">-</button>
+                <input id="stage3dZoomRange" class="stage-3d-range" type="range" min="0.7" max="1.8" step="0.05" value="1" />
+                <button id="stage3dZoomIn" class="stage-3d-btn secondary" type="button">+</button>
+                <span id="stage3dZoomValue" class="stage-3d-meta">100%</span>
+              </div>
+              <div class="stage-3d-row">
+                <label for="stage3dSpeedRange">Orbit Speed</label>
+                <input id="stage3dSpeedRange" class="stage-3d-range" type="range" min="0.1" max="2.4" step="0.1" value="0.9" />
+                <span id="stage3dSpeedValue" class="stage-3d-meta">Medium</span>
+              </div>
+            </div>
+            <div id="canvasPlaceholder" class="canvas-placeholder">Service and stage preview will appear here</div>
+            <img id="generatedImage" alt="Generated stage" style="display:none;max-width:100%;border-radius:8px;" />
+            <div id="gallery" class="gallery" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stage-section" id="services">
+    <div class="container">
+      <h2 class="section-title">Event Service Design Console</h2>
+      <div class="controls-section">
+        <div class="control-group">
+          <label for="eventTypeInput">Event Service Type:</label>
+          <input type="text" id="eventTypeInput" placeholder="e.g. College Fest, Wedding, Corporate Show" />
+        </div>
+
+        <div class="control-group">
+          <label>Stage Width (ft):</label>
+          <input type="number" id="widthInput" min="5" max="200" value="20" placeholder="e.g. 20" />
+        </div>
+
+        <div class="control-group">
+          <label>Stage Height (ft):</label>
+          <input type="number" id="heightInput" min="3" max="100" value="10" placeholder="e.g. 10" />
+        </div>
+
+        <div class="control-group full-width-group">
+          <label>LED Design Style:</label>
+          <div class="led-pattern-grid">
+            <div class="led-pattern selected" data-led="geometric"><div>Geometric</div><small>Bold pattern</small></div>
+            <div class="led-pattern" data-led="pixel"><div>Pixel</div><small>Grid look</small></div>
+            <div class="led-pattern" data-led="wave"><div>Wave</div><small>Flow motion</small></div>
+            <div class="led-pattern" data-led="stage3d"><div>Stage 3D</div><small>Depth layout</small></div>
+            <div class="led-pattern" data-led="neon"><div>Neon</div><small>Vibrant edge</small></div>
+            <div class="led-pattern" data-led="hologram"><div>Hologram</div><small>3D feel</small></div>
+            <div class="led-pattern" data-led="spectrum"><div>Spectrum</div><small>Multi-color</small></div>
+          </div>
+        </div>
+
+        <div class="control-group full-width-group">
+          <label>Sound System Plan:</label>
+          <div class="sound-system-grid">
+            <div class="sound-option selected" data-sound="stereo"><div>Stereo Pair</div><small>2 boxes</small></div>
+            <div class="sound-option" data-sound="quad"><div>Quad System</div><small>4 boxes</small></div>
+            <div class="sound-option" data-sound="surround"><div>Surround</div><small>360 setup</small></div>
+            <div class="sound-option" data-sound="line_array"><div>Line Array</div><small>Pro setup</small></div>
+          </div>
+        </div>
+
+        <div class="control-group full-width-group">
+          <label>Equipment Coverage:</label>
+          <div class="equipment-grid">
+            <div class="equipment-option selected" data-equipment="both"><div>LED + DJ</div><small>Full setup</small></div>
+            <div class="equipment-option" data-equipment="led_only"><div>LED Only</div><small>Display focus</small></div>
+            <div class="equipment-option" data-equipment="sound_only"><div>DJ Only</div><small>Sound focus</small></div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="eventNameInput">Event Name:</label>
+          <input type="text" id="eventNameInput" placeholder="e.g. College Fest 2026" />
+        </div>
+
+        <div class="control-group">
+          <label for="eventDateInput">Event Date:</label>
+          <input type="text" id="eventDateInput" placeholder="dd-mm-yyyy" />
+        </div>
+
+        <div class="control-group">
+          <label for="eventLocationInput">Event Location:</label>
+          <input type="text" id="eventLocationInput" placeholder="e.g. Main Auditorium" />
+        </div>
+
+        <div class="control-group">
+          <label for="eventPhoneInput">Contact Number:</label>
+          <input type="tel" id="eventPhoneInput" placeholder="e.g. +91 98765 43210" />
+        </div>
+
+        <div class="control-group full-width-group">
+          <label for="eventNotesInput">Service Notes:</label>
+          <input type="text" id="eventNotesInput" placeholder="e.g. Evening show with full LED + DJ support" />
+        </div>
+
+        <button id="generateBtn" class="btn btn-primary service-action-btn service-action-primary">Generate Service Layout</button>
+        <button id="submitServiceBtn" class="btn secondary service-action-btn">Submit Service Request</button>
+        <p id="assistantReply" class="designer-status"></p>
+        <p id="saveEventStatus" class="save-event-status" aria-live="polite"></p>
+
+        <div id="myEventsStatusPanel" class="my-events-status-panel" style="display:none;">
+          <div class="my-events-status-header">
+            <div>
+              <div class="my-events-status-title">My Submitted Service Requests</div>
+              <div class="my-events-status-subtitle">Admin approval & decision tracking</div>
+            </div>
+            <div class="my-events-stats">
+              <div class="my-events-stat">
+                <div class="stat-value" id="myEventsTotalCount">0</div>
+                <div class="stat-label">Total</div>
+              </div>
+              <div class="my-events-stat">
+                <div class="stat-value" id="myEventsApprovedCount">0</div>
+                <div class="stat-label">Approved</div>
+              </div>
+              <div class="my-events-stat">
+                <div class="stat-value" id="myEventsPendingCount">0</div>
+                <div class="stat-label">Pending</div>
+              </div>
+            </div>
+          </div>
+          <div id="myEventsStatusList" class="my-events-status-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="features-section">
+    <div class="container">
+      <h2 class="section-title">Features for complete event service execution</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>Requirement to Render</h3>
+          <p>Convert client event requirements directly into visual stage and service setup drafts.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Service Documentation</h3>
+          <p>Save event metadata, contact details, and notes for admin review and operation planning.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Approval Tracking</h3>
+          <p>Monitor approved, disapproved, and pending service requests from your own submission panel.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer id="contact" class="site-footer">
+    <div class="container footer-inner">
+      <div>&copy; <strong>Event AI</strong> - Event Service Management Platform.</div>
+      <div class="footer-links">
+        <a href="#home">Home</a>
+        <a href="#services">Service Designer</a>
+        <a href="#features">Features</a>
+      </div>
+    </div>
+  </footer>
+
+  <div id="eventGuideFab" class="guide-fab" title="Open Service AI Assistant">AI</div>
+
+  <div id="eventGuideModal" class="guide-modal">
+    <div class="guide-card">
+      <div class="guide-head">
+        <strong>Event Service AI Assistant</strong>
+        <button id="eventGuideClose" class="guide-close" type="button">x</button>
+      </div>
+        <div class="guide-body">
+        <div class="guide-msg">Tell me your event requirements. I will guide width, height, LED, sound, and equipment setup.</div>
+        <div id="eventChatMessages" class="guide-chat-messages"></div>
+
+        <!-- Transcript history panel -->
+        <div id="transcriptPanel" class="assistant-box" style="margin-top:12px; padding:12px; max-height:160px; overflow:auto;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong style="color:#fff;">Transcript History</strong>
+            <div>
+              <button id="clearTranscript" class="mic-btn" style="background:#f44336; color:#fff; padding:6px 10px; font-size:0.85rem;">Clear</button>
+            </div>
+          </div>
+          <div id="transcriptHistory" style="color:#fff; font-size:0.9rem;"></div>
+        </div>
+
+        <div class="guide-chat-input">
+          <input id="eventChatInput" type="text" placeholder="Type: width 40 and height 20" />
+          <div class="speech-wrapper">
+            <button id="eventChatMic" class="mic-btn" title="Speak">🎙️ Speak</button>
+            <button id="wakeToggle" class="mic-btn" title="Wake-word toggle" style="background:#fff7; color:#fff; font-weight:600;">Wake: Off</button>
+            <div id="speechStatus" class="speech-text" aria-live="polite">Tap Speak or press Enter</div>
+            <button id="eventChatSend" type="button">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedLED = "geometric";
+    let selectedSound = "stereo";
+    let selectedEquipment = "both";
+
+    const widthInput = document.getElementById("widthInput");
+    const heightInput = document.getElementById("heightInput");
+    const reviewSvg = document.getElementById("stageReviewSvg");
+    const stageDimensionsLabel = document.getElementById("stageDimensionsLabel");
+    const eventNameInput = document.getElementById("eventNameInput");
+    const eventDateInput = document.getElementById("eventDateInput");
+    const eventLocationInput = document.getElementById("eventLocationInput");
+    const eventPhoneInput = document.getElementById("eventPhoneInput");
+    const eventNotesInput = document.getElementById("eventNotesInput");
+    const eventTypeInput = document.getElementById("eventTypeInput");
+    const submitServiceBtn = document.getElementById("submitServiceBtn");
+    const saveEventStatus = document.getElementById("saveEventStatus");
+    const stage3dControls = document.getElementById("stage3dControls");
+    const stage3dRotateToggle = document.getElementById("stage3dRotateToggle");
+    const stage3dResetView = document.getElementById("stage3dResetView");
+    const stage3dZoomRange = document.getElementById("stage3dZoomRange");
+    const stage3dZoomIn = document.getElementById("stage3dZoomIn");
+    const stage3dZoomOut = document.getElementById("stage3dZoomOut");
+    const stage3dZoomValue = document.getElementById("stage3dZoomValue");
+    const stage3dSpeedRange = document.getElementById("stage3dSpeedRange");
+    const stage3dSpeedValue = document.getElementById("stage3dSpeedValue");
+    const livePreviewViewBtn = document.getElementById("livePreviewViewBtn");
+
+    const ledPatternStyles = {
+      geometric: "#4f46e5",
+      pixel: "#0ea5e9",
+      wave: "#14b8a6",
+      stage3d: "#334155",
+      neon: "#ec4899",
+      hologram: "#8b5cf6",
+      spectrum: "#f59e0b"
+    };
+
+    const speakerCounts = {
+      stereo: 2,
+      quad: 4,
+      surround: 6,
+      line_array: 8
+    };
+
+    function createSvgNode(name, attrs) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+      Object.entries(attrs || {}).forEach(function(entry) {
+        node.setAttribute(entry[0], entry[1]);
+      });
+      return node;
+    }
+
+    let stage3dRotationDeg = 24;
+    let stage3dTiltDeg = -18;
+    let stage3dZoom = 1;
+    let stage3dSpeedDeg = 0.9;
+    let stage3dAutoRotate = true;
+    let stage3dIsDragging = false;
+    let stage3dDragStartX = 0;
+    let stage3dDragStartY = 0;
+    let stage3dDragStartRotation = 0;
+    let stage3dDragStartTilt = -18;
+    let stage3dAnimationId = null;
+
+    function project3DPoint(point, angleY, angleX, cameraDistance, centerX, centerY) {
+      const cosY = Math.cos(angleY);
+      const sinY = Math.sin(angleY);
+      const xzX = point.x * cosY - point.z * sinY;
+      const xzZ = point.x * sinY + point.z * cosY;
+
+      const cosX = Math.cos(angleX);
+      const sinX = Math.sin(angleX);
+      const yzY = point.y * cosX - xzZ * sinX;
+      const yzZ = point.y * sinX + xzZ * cosX;
+
+      const perspective = cameraDistance / Math.max(80, cameraDistance + yzZ);
+      return {
+        x: centerX + xzX * perspective,
+        y: centerY + yzY * perspective,
+        z: yzZ
+      };
+    }
+
+    function createCuboid(center, size, colors, strokeColor) {
+      const hx = size.w / 2;
+      const hy = size.h / 2;
+      const hz = size.d / 2;
+      const vertices = [
+        { x: center.x - hx, y: center.y - hy, z: center.z - hz },
+        { x: center.x + hx, y: center.y - hy, z: center.z - hz },
+        { x: center.x + hx, y: center.y + hy, z: center.z - hz },
+        { x: center.x - hx, y: center.y + hy, z: center.z - hz },
+        { x: center.x - hx, y: center.y - hy, z: center.z + hz },
+        { x: center.x + hx, y: center.y - hy, z: center.z + hz },
+        { x: center.x + hx, y: center.y + hy, z: center.z + hz },
+        { x: center.x - hx, y: center.y + hy, z: center.z + hz }
+      ];
+
+      const faces = [
+        { idx: [0, 1, 2, 3], fill: colors.back || colors.front, stroke: false },
+        { idx: [4, 5, 6, 7], fill: colors.front, stroke: true },
+        { idx: [0, 1, 5, 4], fill: colors.top, stroke: false },
+        { idx: [3, 2, 6, 7], fill: colors.bottom || colors.front, stroke: false },
+        { idx: [1, 2, 6, 5], fill: colors.side, stroke: false },
+        { idx: [0, 3, 7, 4], fill: colors.side, stroke: false }
+      ];
+
+      return { vertices: vertices, faces: faces, strokeColor: strokeColor || "#e2e8f0" };
+    }
+
+    function draw3DScene(svg, angleDeg, widthFt, heightFt) {
+      const angleY = angleDeg * (Math.PI / 180);
+      const angleX = stage3dTiltDeg * (Math.PI / 180);
+      const centerX = 500;
+      const centerY = 350;
+      const cameraDistance = 980 / Math.max(0.65, stage3dZoom);
+
+      const stageWidth = Math.max(320, widthFt * 19);
+      const stageHeight = Math.max(52, heightFt * 5.6);
+      const stageDepth = Math.max(170, widthFt * 7.4);
+
+      const ledWidth = stageWidth * 0.86;
+      const ledHeight = Math.max(170, heightFt * 17.5);
+      const ledDepth = Math.max(22, stageDepth * 0.12);
+
+      const stageTop = createCuboid(
+        { x: 0, y: 90, z: 0 },
+        { w: stageWidth, h: stageHeight, d: stageDepth },
+        { front: "#0b1220", top: "#161f30", side: "#060b14", bottom: "#04070d", back: "#04070d" },
+        "#334155"
+      );
+
+      const objects = [stageTop];
+
+      const legOffsetX = stageWidth * 0.42;
+      const legOffsetZ = stageDepth * 0.38;
+      const legHeight = 120;
+      const legSize = { w: 14, h: legHeight, d: 14 };
+      [-1, 1].forEach(function(lx) {
+        [-1, 1].forEach(function(lz) {
+          objects.push(createCuboid(
+            { x: lx * legOffsetX, y: 90 + (stageHeight / 2) + (legHeight / 2), z: lz * legOffsetZ },
+            legSize,
+            { front: "#94a3b8", top: "#cbd5e1", side: "#64748b", bottom: "#475569", back: "#64748b" },
+            "#e2e8f0"
+          ));
+        });
+      });
+
+      if (selectedEquipment !== "sound_only") {
+        const ledCenterY = 90 - (stageHeight / 2) - (ledHeight / 2) - 4;
+        const ledCenterZ = (stageDepth * 0.5) + (ledDepth * 0.2);
+
+        const ledFrame = createCuboid(
+          { x: 0, y: ledCenterY, z: ledCenterZ },
+          { w: ledWidth + 40, h: ledHeight + 40, d: ledDepth + 10 },
+          { front: "#0f172a", top: "#334155", side: "#020617", bottom: "#020617", back: "#0b1220" },
+          "#94a3b8"
+        );
+        const ledPanel = createCuboid(
+          { x: 0, y: ledCenterY, z: ledCenterZ + 8 },
+          { w: ledWidth, h: ledHeight, d: ledDepth },
+          { front: "#7dd3fc", top: "#bae6fd", side: "#22d3ee", bottom: "#0891b2", back: "#0e7490" },
+          "#e2e8f0"
+        );
+
+        const ledFrontZ = ledCenterZ + 8 + (ledDepth / 2) + 2;
+        const ledHighlight = createCuboid(
+          { x: 0, y: ledCenterY - (ledHeight * 0.18), z: ledFrontZ },
+          { w: ledWidth * 0.88, h: ledHeight * 0.2, d: 3 },
+          { front: "rgba(255,255,255,0.45)", top: "rgba(255,255,255,0.30)", side: "rgba(255,255,255,0.18)", bottom: "rgba(255,255,255,0.18)", back: "rgba(255,255,255,0.18)" },
+          "rgba(255,255,255,0.35)"
+        );
+
+        objects.push(ledFrame);
+        objects.push(ledPanel);
+        objects.push(ledHighlight);
+
+        const stripCount = 5;
+        for (let s = 0; s < stripCount; s += 1) {
+          const yPos = ledCenterY - (ledHeight * 0.38) + (s * (ledHeight * 0.19));
+          objects.push(createCuboid(
+            { x: 0, y: yPos, z: ledFrontZ + 1 },
+            { w: ledWidth * 0.92, h: 4, d: 2 },
+            { front: "rgba(15,23,42,0.30)", top: "rgba(15,23,42,0.24)", side: "rgba(15,23,42,0.24)", bottom: "rgba(15,23,42,0.24)", back: "rgba(15,23,42,0.24)" },
+            "rgba(148,163,184,0.2)"
+          ));
+        }
+
+        const trussX = (ledWidth / 2) + 28;
+        const trussH = ledHeight + 90;
+        [-1, 1].forEach(function(side) {
+          objects.push(createCuboid(
+            { x: side * trussX, y: ledCenterY + 15, z: ledCenterZ - 8 },
+            { w: 16, h: trussH, d: 16 },
+            { front: "#cbd5e1", top: "#e2e8f0", side: "#94a3b8", bottom: "#64748b", back: "#94a3b8" },
+            "#f8fafc"
+          ));
+        });
+      }
+
+      if (selectedEquipment !== "led_only") {
+        const addLineArrayModule = function(sx, sy, sz, moduleW, moduleH, moduleD) {
+          objects.push(createCuboid(
+            { x: sx, y: sy, z: sz },
+            { w: moduleW, h: moduleH, d: moduleD },
+            { front: "#0a0f18", top: "#1a2332", side: "#05080f", bottom: "#03060b", back: "#090d15" },
+            "#64748b"
+          ));
+
+          const addArrayFace = function(zSign) {
+            const faceZ = sz + (zSign * ((moduleD / 2) + 1.5));
+            const slatZ = faceZ + (zSign * 0.8);
+
+            objects.push(createCuboid(
+              { x: sx, y: sy, z: faceZ },
+              { w: moduleW * 0.86, h: moduleH * 0.9, d: 2.4 },
+              { front: "#111827", top: "#1f2937", side: "#0b1220", bottom: "#0b1220", back: "#0b1220" },
+              "#334155"
+            ));
+
+            for (let slat = 0; slat < 4; slat += 1) {
+              objects.push(createCuboid(
+                { x: sx, y: sy - (moduleH * 0.28) + slat * (moduleH * 0.19), z: slatZ },
+                { w: moduleW * 0.74, h: moduleH * 0.06, d: 1.2 },
+                { front: "#475569", top: "#64748b", side: "#334155", bottom: "#334155", back: "#334155" },
+                "#64748b"
+              ));
+            }
+          };
+
+          addArrayFace(1);
+          addArrayFace(-1);
+
+          objects.push(createCuboid(
+            { x: sx - (moduleW * 0.48), y: sy, z: sz },
+            { w: 2.5, h: moduleH * 0.92, d: moduleD * 0.78 },
+            { front: "#2b3443", top: "#4b5563", side: "#1f2937", bottom: "#1f2937", back: "#2b3443" },
+            "#94a3b8"
+          ));
+          objects.push(createCuboid(
+            { x: sx + (moduleW * 0.48), y: sy, z: sz },
+            { w: 2.5, h: moduleH * 0.92, d: moduleD * 0.78 },
+            { front: "#2b3443", top: "#4b5563", side: "#1f2937", bottom: "#1f2937", back: "#2b3443" },
+            "#94a3b8"
+          ));
+        };
+
+        const addSubStack = function(sx, baseY, sz) {
+          const subW = 88;
+          const subH = 40;
+          const subD = 84;
+          const addSubCabinet = function(cy) {
+            objects.push(createCuboid(
+              { x: sx, y: cy, z: sz },
+              { w: subW, h: subH, d: subD },
+              { front: "#0b111b", top: "#1c2431", side: "#070c13", bottom: "#05080f", back: "#0b111b" },
+              "#475569"
+            ));
+
+            const addSubFace = function(zSign) {
+              const faceZ = sz + (zSign * ((subD / 2) + 1.5));
+              const driverZ = faceZ + (zSign * 1);
+
+              objects.push(createCuboid(
+                { x: sx, y: cy, z: faceZ },
+                { w: subW * 0.9, h: subH * 0.86, d: 2.5 },
+                { front: "#111827", top: "#1f2937", side: "#0b1220", bottom: "#0b1220", back: "#0b1220" },
+                "#334155"
+              ));
+
+              objects.push(createCuboid(
+                { x: sx - (subW * 0.18), y: cy, z: driverZ },
+                { w: subW * 0.2, h: subH * 0.34, d: 1.4 },
+                { front: "#4b5563", top: "#6b7280", side: "#374151", bottom: "#374151", back: "#374151" },
+                "#94a3b8"
+              ));
+              objects.push(createCuboid(
+                { x: sx + (subW * 0.18), y: cy, z: driverZ },
+                { w: subW * 0.2, h: subH * 0.34, d: 1.4 },
+                { front: "#4b5563", top: "#6b7280", side: "#374151", bottom: "#374151", back: "#374151" },
+                "#94a3b8"
+              ));
+            };
+
+            addSubFace(1);
+            addSubFace(-1);
+          };
+
+          addSubCabinet(baseY - (subH * 0.55));
+          addSubCabinet(baseY + (subH * 0.55));
+
+          objects.push(createCuboid(
+            { x: sx, y: baseY + (subH * 1.2), z: sz + 6 },
+            { w: subW + 4, h: 8, d: subD + 10 },
+            { front: "#1e293b", top: "#334155", side: "#0f172a", bottom: "#020617", back: "#0f172a" },
+            "#64748b"
+          ));
+        };
+
+        const addMonitorWedge = function(sx, sz) {
+          const stageTopY = 90 - (stageHeight / 2);
+          const bodyY = stageTopY - 8;
+          objects.push(createCuboid(
+            { x: sx, y: bodyY, z: sz },
+            { w: 34, h: 16, d: 38 },
+            { front: "#0b1220", top: "#1e293b", side: "#020617", bottom: "#020617", back: "#0b1220" },
+            "#64748b"
+          ));
+          objects.push(createCuboid(
+            { x: sx, y: bodyY - 6, z: sz - 10 },
+            { w: 30, h: 6, d: 18 },
+            { front: "#334155", top: "#64748b", side: "#1e293b", bottom: "#1e293b", back: "#334155" },
+            "#94a3b8"
+          ));
+        };
+
+        const count = speakerCounts[selectedSound] || 2;
+        const modulesPerSide = selectedSound === "line_array"
+          ? Math.max(4, Math.ceil(count / 2))
+          : Math.max(2, Math.ceil(count / 2));
+        const moduleW = 26;
+        const moduleH = 38;
+        const moduleD = 26;
+        const arrayX = stageWidth * 0.47;
+        const arrayTopY = 90 - (stageHeight / 2) - (ledHeight * 0.6);
+        const arrayBaseZ = -(stageDepth * 0.82);
+
+        // Dedicated front hanging truss beam for line arrays.
+        if (selectedSound === "line_array") {
+          const trussY = arrayTopY - 30;
+          const trussZ = arrayBaseZ - 18;
+          const trussWidth = stageWidth * 1.04;
+          objects.push(createCuboid(
+            { x: 0, y: trussY, z: trussZ },
+            { w: trussWidth, h: 10, d: 10 },
+            { front: "#f8fafc", top: "#ffffff", side: "#cbd5e1", bottom: "#94a3b8", back: "#cbd5e1" },
+            "#ffffff"
+          ));
+        }
+
+        // Front-corner hanging line-array modules with slight banana curve.
+        [-1, 1].forEach(function(side) {
+          // Rigging bar above each array cluster.
+          objects.push(createCuboid(
+            { x: side * arrayX, y: arrayTopY - 24, z: arrayBaseZ - 14 },
+            { w: 10, h: 26, d: 10 },
+            { front: "#e2e8f0", top: "#f8fafc", side: "#cbd5e1", bottom: "#94a3b8", back: "#cbd5e1" },
+            "#ffffff"
+          ));
+
+          for (let m = 0; m < modulesPerSide; m += 1) {
+            const taper = 1 - (m * 0.035);
+            const modW = moduleW * taper;
+            const sx = (side * arrayX) + (side * m * 1.2);
+            const sy = arrayTopY + (m * (moduleH * 0.82));
+            const sz = arrayBaseZ - (m * 5.2);
+            addLineArrayModule(sx, sy, sz, modW, moduleH, moduleD);
+          }
+        });
+
+        // Two large subs on ground in front below stage.
+        const subY = 90 + (stageHeight / 2) + 34;
+        const subZ = -(stageDepth * 1.08);
+        const subX = stageWidth * 0.39;
+        [-1, 1].forEach(function(side) {
+          addSubStack(side * subX, subY, subZ);
+        });
+
+        // Front stage monitor wedges on top deck.
+        const wedgeCount = selectedSound === "stereo" ? 2 : (selectedSound === "quad" ? 4 : 6);
+        const wedgeSpan = stageWidth * 0.56;
+        const wedgeStart = -(wedgeSpan / 2);
+        const wedgeGap = wedgeCount > 1 ? (wedgeSpan / (wedgeCount - 1)) : 0;
+        const wedgeZ = stageDepth * 0.36;
+        for (let w = 0; w < wedgeCount; w += 1) {
+          addMonitorWedge(wedgeStart + (w * wedgeGap), wedgeZ);
+        }
+      }
+
+      const drawFaces = [];
+
+      objects.forEach(function(obj) {
+        const projectedVertices = obj.vertices.map(function(vertex) {
+          return project3DPoint(vertex, angleY, angleX, cameraDistance, centerX, centerY);
+        });
+
+        obj.faces.forEach(function(face) {
+          const points = face.idx.map(function(index) { return projectedVertices[index]; });
+
+          const depth = points.reduce(function(sum, p) { return sum + p.z; }, 0) / points.length;
+          drawFaces.push({
+            points: points,
+            fill: face.fill,
+            stroke: face.stroke ? obj.strokeColor : "none",
+            depth: depth
+          });
+        });
+      });
+
+      drawFaces.sort(function(a, b) { return a.depth - b.depth; });
+
+      drawFaces.forEach(function(face) {
+        const poly = createSvgNode("polygon", {
+          points: face.points.map(function(p) { return p.x + "," + p.y; }).join(" "),
+          fill: face.fill,
+          stroke: face.stroke,
+          "stroke-width": face.stroke === "none" ? "0" : "1.7"
+        });
+        svg.appendChild(poly);
+      });
+
+      if (selectedEquipment !== "sound_only") {
+        const ledGlow = createSvgNode("ellipse", {
+          cx: "500",
+          cy: "332",
+          rx: String(Math.max(120, ledWidth * 0.28)),
+          ry: "28",
+          fill: "rgba(125, 211, 252, 0.22)"
+        });
+        svg.appendChild(ledGlow);
+      }
+
+      const shadow = createSvgNode("ellipse", {
+        cx: "500",
+        cy: "458",
+        rx: String(Math.max(170, stageWidth * 0.36)),
+        ry: "26",
+        fill: "rgba(2, 6, 23, 0.45)"
+      });
+      svg.appendChild(shadow);
+    }
+
+    function getSpeedLabel(speed) {
+      if (speed <= 0.6) return "Slow";
+      if (speed <= 1.4) return "Medium";
+      return "Fast";
+    }
+
+    function sync3DControlsUI() {
+      if (stage3dZoomRange) stage3dZoomRange.value = String(stage3dZoom);
+      if (stage3dSpeedRange) stage3dSpeedRange.value = String(stage3dSpeedDeg);
+      if (stage3dZoomValue) stage3dZoomValue.textContent = Math.round(stage3dZoom * 100) + "%";
+      if (stage3dSpeedValue) stage3dSpeedValue.textContent = getSpeedLabel(stage3dSpeedDeg);
+      if (stage3dRotateToggle) stage3dRotateToggle.textContent = stage3dAutoRotate ? "Pause Orbit" : "Resume Orbit";
+    }
+
+    function update3DControlsVisibility() {
+      if (!stage3dControls) return;
+      if (selectedLED === "stage3d") {
+        stage3dControls.classList.add("active");
+      } else {
+        stage3dControls.classList.remove("active");
+      }
+    }
+
+    function start3DAnimation() {
+      if (stage3dAnimationId) return;
+      const animate = function() {
+        if (selectedLED !== "stage3d") {
+          stop3DAnimation();
+          return;
+        }
+        if (stage3dAutoRotate && !stage3dIsDragging) {
+          stage3dRotationDeg = (stage3dRotationDeg + stage3dSpeedDeg) % 360;
+        }
+        renderStageReview(stage3dRotationDeg);
+        stage3dAnimationId = requestAnimationFrame(animate);
+      };
+      stage3dAnimationId = requestAnimationFrame(animate);
+    }
+
+    function stop3DAnimation() {
+      if (!stage3dAnimationId) return;
+      cancelAnimationFrame(stage3dAnimationId);
+      stage3dAnimationId = null;
+    }
+
+    function renderStageReview(rotationDeg) {
+      if (!reviewSvg || !widthInput || !heightInput) return;
+      const widthFt = Math.max(5, parseInt(widthInput.value, 10) || 20);
+      const heightFt = Math.max(3, parseInt(heightInput.value, 10) || 10);
+      const is3DView = selectedLED === "stage3d";
+      stageDimensionsLabel.textContent = widthFt + "ft x " + heightFt + "ft" + (is3DView ? " | 3D Orbit" : "");
+
+      const stageMaxWidth = 760;
+      const stageMaxHeight = 300;
+      const scale = Math.min(stageMaxWidth / widthFt, stageMaxHeight / heightFt);
+      const stageWidth = widthFt * scale;
+      const stageHeight = heightFt * scale;
+      const stageX = (1000 - stageWidth) / 2;
+      const stageY = 500 - stageHeight;
+
+      reviewSvg.innerHTML = "";
+      reviewSvg.appendChild(createSvgNode("rect", { x: "0", y: "0", width: "1000", height: "560", fill: "#0f172a" }));
+      reviewSvg.appendChild(createSvgNode("rect", { x: "0", y: "500", width: "1000", height: "60", fill: "#111827" }));
+
+      if (is3DView) {
+        draw3DScene(reviewSvg, typeof rotationDeg === "number" ? rotationDeg : stage3dRotationDeg, widthFt, heightFt);
+      } else {
+        reviewSvg.appendChild(createSvgNode("rect", {
+          x: String(stageX),
+          y: String(stageY),
+          width: String(stageWidth),
+          height: String(stageHeight),
+          rx: "6",
+          fill: "#1f2937",
+          stroke: "#94a3b8",
+          "stroke-width": "2"
+        }));
+      }
+
+      if (!is3DView && selectedEquipment !== "sound_only") {
+        const ledMargin = Math.max(12, stageWidth * 0.07);
+        const ledHeight = Math.max(40, stageHeight * 0.55);
+        const ledY = stageY + Math.max(10, stageHeight * 0.1);
+        const ledX = stageX + ledMargin;
+        const ledWidth = Math.max(80, stageWidth - ledMargin * 2);
+        reviewSvg.appendChild(createSvgNode("rect", {
+          x: String(ledX),
+          y: String(ledY),
+          width: String(ledWidth),
+          height: String(ledHeight),
+          rx: "6",
+          fill: ledPatternStyles[selectedLED] || "#4f46e5",
+          stroke: "#e2e8f0",
+          "stroke-width": "2"
+        }));
+      }
+
+      if (!is3DView && selectedEquipment !== "led_only") {
+        const count = speakerCounts[selectedSound] || 2;
+        const boxWidth = 28;
+        const boxHeight = selectedSound === "line_array" ? 68 : 52;
+        const spacing = 14;
+        const totalWidth = (count * boxWidth) + ((count - 1) * spacing);
+        const startX = (1000 - totalWidth) / 2;
+        const y = selectedSound === "line_array" ? Math.max(40, stageY - 74) : 500 - boxHeight;
+
+        for (let i = 0; i < count; i += 1) {
+          const speakerX = startX + i * (boxWidth + spacing);
+          reviewSvg.appendChild(createSvgNode("rect", {
+            x: String(speakerX),
+            y: String(y),
+            width: String(boxWidth),
+            height: String(boxHeight),
+            rx: "4",
+            fill: "#111827",
+            stroke: "#f8fafc",
+            "stroke-width": "1.5"
+          }));
+        }
+      }
+    }
+
+    document.querySelectorAll(".led-pattern").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll(".led-pattern").forEach(function(node) { node.classList.remove("selected"); });
+        this.classList.add("selected");
+        selectedLED = this.dataset.led;
+        update3DControlsVisibility();
+        sync3DControlsUI();
+        if (selectedLED === "stage3d" && stage3dAutoRotate) {
+          start3DAnimation();
+        } else {
+          stop3DAnimation();
+        }
+        renderStageReview();
+      });
+    });
+
+    document.querySelectorAll(".sound-option").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll(".sound-option").forEach(function(node) { node.classList.remove("selected"); });
+        this.classList.add("selected");
+        selectedSound = this.dataset.sound;
+        renderStageReview();
+      });
+    });
+
+    document.querySelectorAll(".equipment-option").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll(".equipment-option").forEach(function(node) { node.classList.remove("selected"); });
+        this.classList.add("selected");
+        selectedEquipment = this.dataset.equipment;
+        renderStageReview();
+      });
+    });
+
+    widthInput.addEventListener("input", renderStageReview);
+    heightInput.addEventListener("input", renderStageReview);
+
+    if (stage3dRotateToggle) {
+      stage3dRotateToggle.addEventListener("click", function() {
+        stage3dAutoRotate = !stage3dAutoRotate;
+        sync3DControlsUI();
+        if (selectedLED === "stage3d" && stage3dAutoRotate) {
+          start3DAnimation();
+        } else {
+          stop3DAnimation();
+        }
+        renderStageReview();
+      });
+    }
+
+    if (stage3dResetView) {
+      stage3dResetView.addEventListener("click", function() {
+        stage3dRotationDeg = 24;
+        stage3dTiltDeg = -18;
+        stage3dZoom = 1;
+        sync3DControlsUI();
+        renderStageReview();
+      });
+    }
+
+    if (stage3dZoomRange) {
+      stage3dZoomRange.addEventListener("input", function() {
+        stage3dZoom = Math.min(1.8, Math.max(0.7, parseFloat(this.value) || 1));
+        sync3DControlsUI();
+        renderStageReview();
+      });
+    }
+
+    if (stage3dZoomIn) {
+      stage3dZoomIn.addEventListener("click", function() {
+        stage3dZoom = Math.min(1.8, stage3dZoom + 0.08);
+        sync3DControlsUI();
+        renderStageReview();
+      });
+    }
+
+    if (stage3dZoomOut) {
+      stage3dZoomOut.addEventListener("click", function() {
+        stage3dZoom = Math.max(0.7, stage3dZoom - 0.08);
+        sync3DControlsUI();
+        renderStageReview();
+      });
+    }
+
+    if (stage3dSpeedRange) {
+      stage3dSpeedRange.addEventListener("input", function() {
+        stage3dSpeedDeg = Math.min(2.4, Math.max(0.1, parseFloat(this.value) || 0.9));
+        sync3DControlsUI();
+      });
+    }
+
+    function begin3DDrag(clientX, clientY) {
+      if (selectedLED !== "stage3d") return;
+      if (stage3dAutoRotate) stop3DAnimation();
+      stage3dIsDragging = true;
+      stage3dDragStartX = clientX;
+      stage3dDragStartY = clientY;
+      stage3dDragStartRotation = stage3dRotationDeg;
+      stage3dDragStartTilt = stage3dTiltDeg;
+      reviewSvg.classList.add("dragging");
+    }
+
+    function move3DDrag(clientX, clientY) {
+      if (!stage3dIsDragging || selectedLED !== "stage3d") return;
+      const deltaX = clientX - stage3dDragStartX;
+      const deltaY = clientY - stage3dDragStartY;
+      stage3dRotationDeg = (stage3dDragStartRotation + (deltaX * 0.42)) % 360;
+      stage3dTiltDeg = Math.max(-80, Math.min(80, stage3dDragStartTilt + (deltaY * 0.2)));
+      renderStageReview();
+    }
+
+    function end3DDrag() {
+      if (!stage3dIsDragging) return;
+      stage3dIsDragging = false;
+      reviewSvg.classList.remove("dragging");
+      if (selectedLED === "stage3d" && stage3dAutoRotate) start3DAnimation();
+    }
+
+    reviewSvg.addEventListener("mousedown", function(event) {
+      event.preventDefault();
+      begin3DDrag(event.clientX, event.clientY);
+    });
+
+    window.addEventListener("mousemove", function(event) {
+      if (!stage3dIsDragging) return;
+      move3DDrag(event.clientX, event.clientY);
+    });
+
+    window.addEventListener("mouseup", end3DDrag);
+
+    reviewSvg.addEventListener("touchstart", function(event) {
+      if (!event.touches || !event.touches[0]) return;
+      begin3DDrag(event.touches[0].clientX, event.touches[0].clientY);
+    }, { passive: true });
+
+    reviewSvg.addEventListener("touchmove", function(event) {
+      if (!stage3dIsDragging || !event.touches || !event.touches[0]) return;
+      move3DDrag(event.touches[0].clientX, event.touches[0].clientY);
+    }, { passive: true });
+
+    window.addEventListener("touchend", end3DDrag);
+
+    async function generateImage(opts) {
+      const options = opts || { appendToGallery: true };
+      const assistantReply = document.getElementById("assistantReply");
+      const canvasPlaceholder = document.getElementById("canvasPlaceholder");
+      const generatedImage = document.getElementById("generatedImage");
+      const gallery = document.getElementById("gallery");
+      const generateBtn = document.getElementById("generateBtn");
+      const fullOutputWindow = options.openFreshPage ? window.open("about:blank", "_blank") : null;
+      const generationStart = Date.now();
+      let generationTicker = null;
+
+      if (fullOutputWindow && !fullOutputWindow.closed) {
+        try {
+          fullOutputWindow.document.open();
+          fullOutputWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Generating Output...</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#081724;color:#d8ecff;font-family:Segoe UI,Arial,sans-serif} .box{padding:24px 28px;border:1px solid #224f6b;border-radius:12px;background:#0f2434;text-align:center;max-width:460px} .sub{color:#8fb8d6;font-size:14px;margin-top:8px}</style></head><body><div class="box"><div id="loadingText">Generating service layout... Please wait</div><div class="sub">This can take 10 to 30 seconds.</div></div></body></html>`);
+          fullOutputWindow.document.close();
+        } catch (_err) {
+          // Ignore popup rendering errors and continue generation in main page.
+        }
+      }
+
+      const backendBase = await resolveBackendBaseUrl();
+      const generateUrl = backendBase + "/generate";
+      const fallbackImageUrl = backendBase + "/large-outdoor-concert-stage-truss-600nw-2695141455.webp";
+
+      document.querySelector(".hero-right").scrollIntoView({ behavior: "smooth" });
+
+      const width = widthInput.value;
+      const height = heightInput.value;
+      if (!width || !height) {
+        assistantReply.textContent = "Please enter both width and height.";
+        if (fullOutputWindow && !fullOutputWindow.closed) {
+          fullOutputWindow.close();
+        }
+        return;
+      }
+
+      renderStageReview();
+      // Persist exact current configuration before async generation so preview page always has data.
+      syncFullOutputPayload("");
+      assistantReply.textContent = "Generating output design... please wait.";
+      canvasPlaceholder.style.display = "block";
+      canvasPlaceholder.textContent = "Designing stage layout...";
+      generatedImage.style.display = "none";
+      generateBtn.disabled = true;
+
+      generationTicker = setInterval(function() {
+        const elapsed = Math.max(1, Math.floor((Date.now() - generationStart) / 1000));
+        const dots = ".".repeat((elapsed % 3) + 1);
+        const modeLabel = selectedEquipment === "led_only"
+          ? "LED-only stage"
+          : (selectedEquipment === "sound_only" ? "DJ-only stage" : "LED + DJ stage");
+
+        assistantReply.textContent = "Generating output design, please wait " + dots + " (" + elapsed + "s)";
+        canvasPlaceholder.textContent = "Designing " + modeLabel + dots + " (" + elapsed + "s)";
+
+        if (fullOutputWindow && !fullOutputWindow.closed) {
+          try {
+            const label = fullOutputWindow.document.getElementById("loadingText");
+            if (label) {
+              label.textContent = "Generating " + modeLabel + dots + " (" + elapsed + "s)";
+            }
+          } catch (_err) {
+            // Ignore cross-window read errors.
+          }
+        }
+      }, 700);
+
+      try {
+        const response = await fetch(generateUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: selectedEquipment + ", " + width + "ft x " + height + "ft",
+            width: width,
+            height: height,
+            ledPattern: selectedLED,
+            soundSystem: selectedSound,
+            equipment: selectedEquipment
+          })
+        });
+
+        let data = null;
+        try {
+          data = await response.json();
+        } catch (_parseErr) {
+          data = null;
+        }
+
+        if (!response.ok) {
+          const errorMessage = (data && (data.error || data.message)) || "Server error";
+          throw new Error(errorMessage);
+        }
+
+        if (!data || typeof data !== "object") {
+          throw new Error("Invalid response from server");
+        }
+
+        if (data.demo === true) {
+          const providerErrorText = Array.isArray(data.providerErrors) && data.providerErrors.length
+            ? data.providerErrors.join(" | ")
+            : "No provider could generate an image.";
+          const fallbackImageUrl = await buildStageRenderFallbackImage();
+
+          const thumb = document.createElement("img");
+          thumb.src = fallbackImageUrl;
+          thumb.classList.add("thumb", "loaded");
+          thumb.alt = "Rendered stage fallback";
+          thumb.onclick = function() {
+            generatedImage.src = fallbackImageUrl;
+            generatedImage.classList.add("loaded");
+            generatedImage.style.display = "block";
+            canvasPlaceholder.style.display = "none";
+          };
+
+          if (options.appendToGallery) {
+            gallery.insertBefore(thumb, gallery.firstChild);
+          }
+
+          generatedImage.src = fallbackImageUrl;
+          generatedImage.classList.add("loaded");
+          generatedImage.style.display = "block";
+          canvasPlaceholder.style.display = "none";
+          syncFullOutputPayload(fallbackImageUrl);
+          openFullOutputPage(fullOutputWindow);
+          assistantReply.textContent = "AI providers unavailable. Showing rendered stage layout. " + providerErrorText;
+          return;
+        }
+
+        let imgUrl = data.image;
+
+        // If server returns a saved file path, prefer it over data URL/path.
+        if (data.savedImagePath) {
+          imgUrl = backendBase + data.savedImagePath;
+        }
+
+        if (typeof imgUrl !== "string" || !imgUrl) {
+          throw new Error("No generated image in response");
+        }
+
+        const thumb = document.createElement("img");
+        thumb.src = imgUrl;
+        thumb.classList.add("thumb");
+        thumb.alt = "Generated service stage";
+        thumb.onload = function() { thumb.classList.add("loaded"); };
+        thumb.onclick = function() {
+          generatedImage.src = imgUrl;
+          generatedImage.classList.add("loaded");
+          generatedImage.style.display = "block";
+          canvasPlaceholder.style.display = "none";
+        };
+
+        if (options.appendToGallery) {
+          gallery.insertBefore(thumb, gallery.firstChild);
+        }
+
+        generatedImage.src = imgUrl;
+        generatedImage.onload = function() { generatedImage.classList.add("loaded"); };
+        generatedImage.style.display = "block";
+        canvasPlaceholder.style.display = "none";
+        syncFullOutputPayload(imgUrl);
+        openFullOutputPage(fullOutputWindow);
+        assistantReply.textContent = "Service layout generated successfully.";
+      } catch (error) {
+        const fallbackImageUrl = await buildStageRenderFallbackImage();
+
+        const thumb = document.createElement("img");
+        thumb.src = fallbackImageUrl;
+        thumb.classList.add("thumb", "loaded");
+        thumb.alt = "Rendered stage fallback";
+        thumb.onclick = function() {
+          generatedImage.src = fallbackImageUrl;
+          generatedImage.classList.add("loaded");
+          generatedImage.style.display = "block";
+          canvasPlaceholder.style.display = "none";
+        };
+
+        if (options.appendToGallery) {
+          gallery.insertBefore(thumb, gallery.firstChild);
+        }
+
+        generatedImage.src = fallbackImageUrl;
+        generatedImage.classList.add("loaded");
+        generatedImage.style.display = "block";
+        canvasPlaceholder.style.display = "none";
+        syncFullOutputPayload(fallbackImageUrl);
+        openFullOutputPage(fullOutputWindow);
+        assistantReply.textContent = "Generation failed from AI providers. Showing rendered stage layout instead.";
+      } finally {
+        if (generationTicker) {
+          clearInterval(generationTicker);
+        }
+        generateBtn.disabled = false;
+      }
+    }
+
+    function buildInlineFallbackPreview() {
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+          <defs>
+            <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#0b1738"/>
+              <stop offset="100%" stop-color="#1f2f67"/>
+            </linearGradient>
+          </defs>
+          <rect width="960" height="540" fill="url(#bg)"/>
+          <rect x="170" y="120" width="620" height="300" rx="14" fill="#121b34" stroke="#4c66c7" stroke-width="4"/>
+          <rect x="280" y="180" width="400" height="150" rx="8" fill="#5d63ff" opacity="0.85"/>
+          <text x="480" y="375" text-anchor="middle" fill="#ffffff" font-size="26" font-family="Arial, sans-serif">Sample Stage Preview</text>
+          <text x="480" y="410" text-anchor="middle" fill="#a8b4ff" font-size="18" font-family="Arial, sans-serif">AI image unavailable. Check API keys and server logs.</text>
+        </svg>`;
+      return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
+    }
+
+    async function buildStageRenderFallbackImage() {
+      const svgMarkup = getSerializedStageSvg();
+      if (!svgMarkup) return buildInlineFallbackPreview();
+
+      const blob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
+      const objectUrl = URL.createObjectURL(blob);
+
+      try {
+        const img = await new Promise(function(resolve, reject) {
+          const image = new Image();
+          image.onload = function() { resolve(image); };
+          image.onerror = reject;
+          image.src = objectUrl;
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 1400;
+        canvas.height = 784;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return buildInlineFallbackPreview();
+
+        ctx.fillStyle = "#0b1738";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        return canvas.toDataURL("image/png");
+      } catch (_err) {
+        return buildInlineFallbackPreview();
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+
+    async function resolveBackendBaseUrl() {
+      const origin = window.location.origin;
+      const hostname = window.location.hostname || "localhost";
+      const currentPort = window.location.port || "";
+
+      async function isHealthyAppServer(baseUrl) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(function() {
+          controller.abort();
+        }, 2500);
+
+        try {
+          const check = await fetch(baseUrl + "/health", {
+            method: "GET",
+            signal: controller.signal
+          });
+          if (!check.ok) return false;
+
+          const contentType = (check.headers.get("content-type") || "").toLowerCase();
+          if (!contentType.includes("application/json")) return false;
+
+          const data = await check.json();
+          return Boolean(data && data.ok === true);
+        } catch (_err) {
+          return false;
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+
+      const candidates = [];
+
+      // Prioritize same-origin only if it is actually the expected API server.
+      if (currentPort === "3000" || currentPort === "3001" || currentPort === "3002") {
+        candidates.push(origin);
+      }
+
+      const fallbackPorts = ["3002", "3001", "3000"];
+      for (const port of fallbackPorts) {
+        const baseUrl = `http://${hostname}:${port}`;
+        if (!candidates.includes(baseUrl)) {
+          candidates.push(baseUrl);
+        }
+      }
+
+      for (const baseUrl of candidates) {
+        const healthy = await isHealthyAppServer(baseUrl);
+        if (healthy) return baseUrl;
+      }
+
+      // Keep localhost:3000 as final default because this app's Node server uses 3000 by default.
+      return `http://${hostname}:3000`;
+    }
+
+    function readLocalArray(key) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (_err) {
+        return [];
+      }
+    }
+
+    function writeLocalArray(key, value) {
+      localStorage.setItem(key, JSON.stringify(Array.isArray(value) ? value : []));
+    }
+
+    function getSerializedStageSvg() {
+      if (!reviewSvg) return "";
+      let svgMarkup = new XMLSerializer().serializeToString(reviewSvg);
+      if (!svgMarkup.includes("xmlns=")) {
+        svgMarkup = svgMarkup.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      return svgMarkup;
+    }
+
+    function syncFullOutputPayload(imageUrl) {
+      const payload = {
+        eventType: (eventTypeInput.value || "").trim(),
+        eventName: (eventNameInput.value || "").trim(),
+        eventDate: (eventDateInput.value || "").trim(),
+        eventLocation: (eventLocationInput.value || "").trim(),
+        stageWidthFt: Math.max(5, parseInt(widthInput.value || "20", 10)),
+        stageHeightFt: Math.max(3, parseInt(heightInput.value || "10", 10)),
+        ledPattern: selectedLED,
+        soundSystem: selectedSound,
+        setupMode: selectedEquipment,
+        generatedImage: imageUrl || "",
+        reviewSvg: getSerializedStageSvg(),
+        createdAt: new Date().toISOString()
+      };
+      sessionStorage.setItem("eventFullOutputPreview", JSON.stringify(payload));
+      // Also store in localStorage so freshly opened tabs always receive latest payload.
+      localStorage.setItem("eventFullOutputPreview", JSON.stringify(payload));
+    }
+
+    function openFullOutputPage(existingWindow) {
+      const previewUrl = "preview-output.html?t=" + Date.now();
+      if (existingWindow && !existingWindow.closed) {
+        existingWindow.location.href = previewUrl;
+        return;
+      }
+      window.open(previewUrl, "_blank");
+    }
+
+    function openLatestGeneratedPreview() {
+      const assistantReply = document.getElementById("assistantReply");
+      const generatedImage = document.getElementById("generatedImage");
+      const gallery = document.getElementById("gallery");
+
+      let imageUrl = "";
+      if (generatedImage && generatedImage.src && generatedImage.style.display !== "none") {
+        imageUrl = generatedImage.src;
+      }
+
+      if (!imageUrl && gallery && gallery.firstElementChild && gallery.firstElementChild.tagName === "IMG") {
+        imageUrl = gallery.firstElementChild.src;
+      }
+
+      if (!imageUrl) {
+        assistantReply.textContent = "Generate layout first, then click View.";
+        return;
+      }
+
+      syncFullOutputPayload(imageUrl);
+      openFullOutputPage();
+    }
+
+    function submitServiceRequest() {
+      const eventName = (eventNameInput.value || "").trim();
+      const eventDate = (eventDateInput.value || "").trim();
+      const eventLocation = (eventLocationInput.value || "").trim();
+      const eventPhone = (eventPhoneInput.value || "").trim();
+
+      if (!eventName || !eventDate || !eventLocation || !eventPhone) {
+        saveEventStatus.style.color = "#b91c1c";
+        saveEventStatus.textContent = "Please fill Event Name, Date, Location and Contact Number before submitting.";
+        return;
+      }
+
+      renderStageReview();
+      const generatedImage = document.getElementById("generatedImage");
+      const previewImage = generatedImage.src && generatedImage.style.display !== "none" ? generatedImage.src : "";
+
+      const eventRecord = {
+        eventType: selectedEquipment,
+        eventName: eventName,
+        eventDate: eventDate,
+        eventLocation: eventLocation,
+        eventPhone: eventPhone,
+        eventNotes: (eventNotesInput.value || "").trim(),
+        stageWidthFt: Math.max(5, parseInt(widthInput.value || "20", 10)),
+        stageHeightFt: Math.max(3, parseInt(heightInput.value || "10", 10)),
+        ledPattern: selectedLED,
+        soundSystem: selectedSound,
+        setupMode: selectedEquipment,
+        reviewSvg: getSerializedStageSvg(),
+        previewImage: previewImage,
+        timestamp: new Date().toISOString(),
+        status: "pending",
+        userId: sessionStorage.getItem("currentUser") || "guest"
+      };
+
+      const savedEvents = readLocalArray("eventApplications");
+      savedEvents.push(eventRecord);
+      writeLocalArray("eventApplications", savedEvents);
+
+      const activityLogs = readLocalArray("projectActivity");
+      activityLogs.unshift({
+        time: new Date().toLocaleString(),
+        msg: "Submitted service request: " + eventName
+      });
+      writeLocalArray("projectActivity", activityLogs.slice(0, 30));
+
+      saveEventStatus.style.color = "#166534";
+      saveEventStatus.textContent = "Service request submitted. Admin will approve/disapprove your request.";
+      renderMyEventsStatus();
+    }
+
+    function renderMyEventsStatus() {
+      const panel = document.getElementById("myEventsStatusPanel");
+      const list = document.getElementById("myEventsStatusList");
+      const me = sessionStorage.getItem("currentUser") || "guest";
+      const all = readLocalArray("eventApplications");
+      const mine = all.filter(function(e) { return (e.userId || "guest") === me; });
+
+      if (!mine.length) {
+        panel.style.display = "none";
+        return;
+      }
+
+      panel.style.display = "block";
+      
+      // Update stats
+      const totalCount = mine.length;
+      const approvedCount = mine.filter(e => e.status === "approved").length;
+      const pendingCount = mine.filter(e => !e.status || e.status === "pending").length;
+      
+      document.getElementById("myEventsTotalCount").textContent = String(totalCount);
+      document.getElementById("myEventsApprovedCount").textContent = String(approvedCount);
+      document.getElementById("myEventsPendingCount").textContent = String(pendingCount);
+      
+      list.innerHTML = mine.map(function(ev) {
+        const status = ev.status || "pending";
+        const statusMap = {
+          approved: { icon: "✓", label: "APPROVED", className: "status-approved" },
+          disapproved: { icon: "✕", label: "DISAPPROVED", className: "status-disapproved" },
+          pending: { icon: "⏳", label: "PENDING REVIEW", className: "status-pending" }
+        };
+        const cfg = statusMap[status] || statusMap.pending;
+        const submittedDate = ev.timestamp ? new Date(ev.timestamp).toLocaleString() : "N/A";
+        const updatedDate = ev.statusUpdatedAt ? new Date(ev.statusUpdatedAt).toLocaleString() : "";
+        const stageInfo = "Stage: " + (ev.stageWidthFt || "N/A") + " x " + (ev.stageHeightFt || "N/A") + " ft";
+        const ledInfo = "LED: " + (ev.ledPattern || "N/A");
+        const soundInfo = "Sound: " + (ev.soundSystem || "N/A").replace(/_/g, " ");
+
+        let html = "<div class='my-event-card'>"
+          + "<div class='my-event-header'>"
+          + "<div class='my-event-info'>"
+          + "<h3 class='my-event-name'>" + (ev.eventName || "Unnamed Event") + "</h3>"
+          + "<p class='my-event-location'>📍 " + (ev.eventLocation || "Location TBA") + " • " + (ev.eventDate || "Date TBA") + "</p>"
+          + "</div>"
+          + "<span class='my-event-status " + cfg.className + "'>" + cfg.icon + " " + cfg.label + "</span>"
+          + "</div>"
+          + "<div class='my-event-details'>"
+          + "<div class='my-event-detail-grid'>"
+          + "<div class='my-event-detail-item'>" + stageInfo + "</div>"
+          + "<div class='my-event-detail-item'>" + ledInfo + "</div>"
+          + "<div class='my-event-detail-item'>" + soundInfo + "</div>"
+          + "</div>"
+          + "</div>"
+          + "<div class='my-event-timeline'>"
+          + "<div class='my-event-timeline-item'>"
+          + "<span class='my-event-timeline-label'>Submitted:</span>"
+          + "<span class='my-event-timeline-date'>" + submittedDate + "</span>"
+          + "</div>";
+          
+        if (updatedDate) {
+          html += "<div class='my-event-timeline-item'>"
+            + "<span class='my-event-timeline-label'>" + (status === "approved" ? "Approved" : "Decided") + ":</span>"
+            + "<span class='my-event-timeline-date'>" + updatedDate + "</span>"
+            + "</div>";
+        }
+        
+        html += "</div></div>";
+        return html;
+      }).join("");
+    }
+
+    const eventGuideFab = document.getElementById("eventGuideFab");
+    const eventGuideModal = document.getElementById("eventGuideModal");
+    const eventGuideClose = document.getElementById("eventGuideClose");
+    const eventChatMessages = document.getElementById("eventChatMessages");
+    const eventChatInput = document.getElementById("eventChatInput");
+    const eventChatSend = document.getElementById("eventChatSend");
+
+    function addChatLine(type, text) {
+      const line = document.createElement("div");
+      line.className = "guide-chat-line " + type;
+      line.textContent = text;
+      eventChatMessages.appendChild(line);
+      eventChatMessages.scrollTop = eventChatMessages.scrollHeight;
+    }
+
+    function parseNumbers(input) {
+      return (input.match(/\d+/g) || []).map(function(v) { return parseInt(v, 10); });
+    }
+
+    function parseLedChoice(input) {
+      const value = input.toLowerCase();
+      if (value.includes("geometric")) return "geometric";
+      if (value.includes("pixel")) return "pixel";
+      if (value.includes("wave")) return "wave";
+      if (value.includes("stage 3d") || value.includes("3d") || value.includes("depth")) return "stage3d";
+      if (value.includes("neon")) return "neon";
+      if (value.includes("hologram")) return "hologram";
+      if (value.includes("spectrum")) return "spectrum";
+      return null;
+    }
+
+    function parseSoundChoice(input) {
+      const value = input.toLowerCase();
+      if (value.includes("stereo")) return "stereo";
+      if (value.includes("quad")) return "quad";
+      if (value.includes("surround")) return "surround";
+      if (value.includes("line")) return "line_array";
+      return null;
+    }
+
+    function applyOption(selector, dataAttr, value) {
+      const target = document.querySelector(selector + "[data-" + dataAttr + "=\"" + value + "\"]");
+      if (target) target.click();
+    }
+
+    // Determine user's preferred speech language from localStorage
+    function getSelectedSpeechLang() {
+      const sel = (localStorage.getItem('selectedLanguage') || 'en').toLowerCase();
+      const map = {
+        en: 'en-US',
+        hi: 'hi-IN',
+        te: 'te-IN',
+        mr: 'mr-IN',
+        ta: 'ta-IN',
+        ur: 'ur-PK',
+        gu: 'gu-IN',
+        kn: 'kn-IN',
+        or: 'or-IN',
+        pa: 'pa-IN',
+        as: 'as-IN',
+        ml: 'ml-IN',
+        ne: 'ne-NP',
+        si: 'si-LK',
+        bn: 'bn-BD',
+        fr: 'fr-FR',
+        es: 'es-ES'
+      };
+      return map[sel] || (sel.length === 2 ? (sel + '-' + sel.toUpperCase()) : 'en-US');
+    }
+
+    function getSelectedLanguageCode() {
+      return (
+        localStorage.getItem('selectedLanguage') ||
+        sessionStorage.getItem('currentLanguage') ||
+        'en'
+      ).toLowerCase();
+    }
+
+    const assistantSpeechPhrases = {
+      en: {
+        assistantTitle: "Event Service AI Assistant",
+        guideMsg: "Tell me your event requirements. I will guide width, height, LED, sound, and equipment setup.",
+        transcriptTitle: "Transcript History",
+        clear: "Clear",
+        speak: "🎙️ Speak",
+        wakeOn: "Wake: On",
+        wakeOff: "Wake: Off",
+        tapSpeak: "Tap Speak or press Enter",
+        listening: "Listening... Speak now",
+        greeting: "Hi! I'm your Event Service AI Assistant. I'll design your perfect stage setup in minutes. What kind of event are you planning?",
+        eventType: "Great choice. Now tell me your stage dimensions. Example: width 40 feet and height 20 feet.",
+        dimensions: "Perfect. I set your stage to {width} feet wide and {height} feet high. Now choose the LED style.",
+        led: "Awesome. I applied the {ledStyle} LED style. Now choose the sound system.",
+        sound: "Excellent. I set the {soundSystem} sound system. Do you want both, LED only, or DJ only?",
+        equipment: "Perfect. I saved the {equipment} setup. Say generate to create the stage design.",
+        generate: "Generating your stage design now. Watch the magic happen.",
+        submit: "Submitting your service request now. The admin team will review it soon.",
+        help: "I can help with stage size, LED style, sound system, equipment choice, generate, and submit.",
+        unknown: "I'm here to help. Please tell me what event you're planning or say help.",
+        acknowledge: "Great. What should we adjust next?"
+      },
+      te: {
+        assistantTitle: "ఈవెంట్ సర్వీస్ AI అసిస్టెంట్",
+        guideMsg: "మీ ఈవెంట్ అవసరాలు చెప్పండి. వెడల్పు, ఎత్తు, LED, సౌండ్, మరియు ఎక్విప్మెంట్ సెటప్‌లో నేను సహాయం చేస్తాను.",
+        transcriptTitle: "ట్రాన్స్‌క్రిప్ట్ చరిత్ర",
+        clear: "తొలగించు",
+        speak: "🎙️ మాట్లాడండి",
+        wakeOn: "వేక్: ప్రారంభం",
+        wakeOff: "వేక్: ఆపండి",
+        tapSpeak: "మాట్లాడండి లేదా ఎంటర్ నొక్కండి",
+        listening: "వింటున్నాను... ఇప్పుడు మాట్లాడండి",
+        greeting: "హాయ్! నేను మీ ఈవెంట్ సర్వీస్ AI అసిస్టెంట్‌ని. మీకు సరిపోయే స్టేజ్ సెటప్‌ను వెంటనే తయారు చేస్తాను. మీరు ఏ ఈవెంట్ ప్లాన్ చేస్తున్నారు?",
+        eventType: "బాగుంది. ఇప్పుడు మీ స్టేజ్ కొలతలు చెప్పండి. ఉదాహరణ: వెడల్పు 40 అడుగులు, ఎత్తు 20 అడుగులు.",
+        dimensions: "పర్ఫెక్ట్. మీ స్టేజ్‌ను {width} అడుగుల వెడల్పు మరియు {height} అడుగుల ఎత్తుగా సెట్ చేశాను. ఇప్పుడు LED స్టైల్ ఎంచుకోండి.",
+        led: "అద్భుతం. నేను {ledStyle} LED స్టైల్‌ను వర్తింపజేశాను. ఇప్పుడు సౌండ్ సిస్టమ్ ఎంచుకోండి.",
+        sound: "చాలా బాగుంది. నేను {soundSystem} సౌండ్ సిస్టమ్‌ను సెట్ చేశాను. మీకు రెండూ, LED మాత్రమే, లేదా DJ మాత్రమే కావాలా?",
+        equipment: "సరే. నేను {equipment} సెటప్‌ను సేవ్ చేశాను. స్టేజ్ డిజైన్ తయారు చేయడానికి రూపొందించు అని చెప్పండి.",
+        generate: "ఇప్పుడు మీ స్టేజ్ డిజైన్‌ను తయారు చేస్తున్నాను. మ్యాజిక్ చూడండి.",
+        submit: "ఇప్పుడు మీ సర్వీస్ రిక్వెస్ట్‌ను పంపుతున్నాను. అడ్మిన్ టీమ్ త్వరలో రివ్యూ చేస్తుంది.",
+        help: "స్టేజ్ సైజ్, LED స్టైల్, సౌండ్ సిస్టమ్, ఎక్విప్మెంట్, రూపొందించు, పంపు లో నేను సహాయం చేస్తాను.",
+        unknown: "నేను సహాయం చేయడానికి ఉన్నాను. మీరు ప్లాన్ చేస్తున్న ఈవెంట్ చెప్పండి లేదా సహాయం అని చెప్పండి.",
+        acknowledge: "బాగుంది. ఇప్పుడు ఇంకేం మార్చాలి?"
+      },
+      ta: {
+        assistantTitle: "நிகழ்வு சேவை AI உதவியாளர்",
+        guideMsg: "உங்கள் நிகழ்வு தேவைகளை சொல்லுங்கள். அகலம், உயரம், LED, ஒலி, மற்றும் உபகரண அமைப்பில் நான் உதவுவேன்.",
+        transcriptTitle: "உரையாடல் வரலாறு",
+        clear: "அழி",
+        speak: "🎙️ பேசவும்",
+        wakeOn: "எழுப்பு: இயக்கு",
+        wakeOff: "எழுப்பு: நிறுத்து",
+        tapSpeak: "பேசவும் அல்லது Enter அழுத்தவும்",
+        listening: "கேட்டுக்கொண்டு இருக்கிறேன்... இப்போது பேசுங்கள்",
+        greeting: "வணக்கம்! நான் உங்கள் Event Service AI Assistant. சில நிமிடங்களில் உங்களுக்கான சரியான stage setup-ஐ வடிவமைப்பேன். நீங்கள் எந்த நிகழ்வை திட்டமிடுகிறீர்கள்?",
+        eventType: "நன்றாக உள்ளது. இப்போது உங்கள் stage அளவுகளை சொல்லுங்கள். உதாரணம்: அகலம் 40 அடி, உயரம் 20 அடி.",
+        dimensions: "சரி. உங்கள் stage-ஐ {width} அடி அகலம் மற்றும் {height} அடி உயரமாக அமைத்தேன். இப்போது LED style-ஐ தேர்ந்தெடுக்கவும்.",
+        led: "அருமை. {ledStyle} LED style-ஐ பயன்படுத்தினேன். இப்போது sound system-ஐ தேர்ந்தெடுக்கவும்.",
+        sound: "சிறப்பு. {soundSystem} sound system-ஐ அமைத்தேன். உங்களுக்கு இரண்டும், LED மட்டும், அல்லது DJ மட்டும் வேண்டுமா?",
+        equipment: "சரி. நான் {equipment} setup-ஐ சேமித்தேன். stage design-ஐ உருவாக்க உருவாக்கு என்று சொல்லுங்கள்.",
+        generate: "இப்போது உங்கள் stage design-ஐ உருவாக்குகிறேன். மாயையை பாருங்கள்.",
+        submit: "இப்போது உங்கள் service request-ஐ அனுப்புகிறேன். admin team விரைவில் review செய்யும்.",
+        help: "stage size, LED style, sound system, equipment choice, உருவாக்கு, அனுப்பு ஆகியவற்றில் நான் உதவ முடியும்.",
+        unknown: "உதவ நான் இருக்கிறேன். நீங்கள் திட்டமிடும் event-ஐ சொல்லுங்கள் அல்லது உதவி என்று சொல்லுங்கள்.",
+        acknowledge: "சரி. அடுத்து என்ன மாற்ற வேண்டும்?"
+      },
+      gu: {
+        assistantTitle: "ઈવેન્ટ સેવા AI સહાયક",
+        guideMsg: "તમારી ઇવેન્ટની જરૂરિયાતો કહો. પહોળાઈ, ઊંચાઈ, LED, સાઉન્ડ, અને સાધન સેટઅપમાં હું મદદ કરીશ.",
+        transcriptTitle: "ટ્રાન્સક્રિપ્ટ ઇતિહાસ",
+        clear: "સાફ કરો",
+        speak: "🎙️ બોલો",
+        wakeOn: "જાગૃતિ: ચાલુ",
+        wakeOff: "જાગૃતિ: બંધ",
+        tapSpeak: "બોલો અથવા Enter દબાવો",
+        listening: "સાંભળું છું... હવે બોલો",
+        greeting: "નમસ્તે! હું તમારો ઈવેન્ટ સેવા AI સહાયક છું. થોડા જ મિનિટોમાં તમારી માટે યોગ્ય સ્ટેજ સેટઅપ બનાવું છું. તમે કયો ઇવેન્ટ પ્લાન કરી રહ્યા છો?",
+        eventType: "સરસ પસંદગી. હવે તમારી સ્ટેજની માપ કહો. ઉદાહરણ: પહોળાઈ 40 ફૂટ અને ઊંચાઈ 20 ફૂટ.",
+        dimensions: "ઠીક છે. મેં તમારું સ્ટેજ {width} ફૂટ પહોળું અને {height} ફૂટ ઊંચું સેટ કર્યું છે. હવે LED સ્ટાઇલ પસંદ કરો.",
+        led: "અદ્ભુત. મેં {ledStyle} LED સ્ટાઇલ લાગુ કરી છે. હવે સાઉન્ડ સિસ્ટમ પસંદ કરો.",
+        sound: "ઉત્કૃષ્ટ. મેં {soundSystem} સાઉન્ડ સિસ્ટમ સેટ કરી છે. તમને બંને, LED માત્ર, કે DJ માત્ર જોઈએ છે?",
+        equipment: "ઠીક છે. મેં {equipment} સેટઅપ સાચવી દીધું છે. સ્ટેજ ડિઝાઇન બનાવવા માટે બનાવો કહો.",
+        generate: "હવે તમારી સ્ટેજ ડિઝાઇન બનાવી રહ્યો છું. જાદુ જુઓ.",
+        submit: "હવે તમારી સર્વિસ વિનંતી મોકલી રહ્યો છું. એડમિન ટીમ ટૂંક સમયમાં સમીક્ષા કરશે.",
+        help: "સ્ટેજ માપ, LED સ્ટાઇલ, સાઉન્ડ સિસ્ટમ, સાધન પસંદગી, બનાવો, અને મોકલોમાં હું મદદ કરી શકું છું.",
+        unknown: "હું મદદ કરવા માટે અહીં છું. કૃપા કરીને તમે કયો ઇવેન્ટ પ્લાન કરી રહ્યા છો તે કહો અથવા મદદ કહો.",
+        acknowledge: "સરસ. હવે શું બદલવું છે?"
+      },
+      hi: {
+        assistantTitle: "इवेंट सेवा AI सहायक",
+        guideMsg: "अपनी इवेंट की ज़रूरतें बताइए। चौड़ाई, ऊँचाई, LED, साउंड और उपकरण सेटअप में मैं मदद करूँगा।",
+        transcriptTitle: "ट्रांसक्रिप्ट इतिहास",
+        clear: "साफ करें",
+        speak: "🎙️ बोलें",
+        wakeOn: "जागृति: चालू",
+        wakeOff: "जागृति: बंद",
+        tapSpeak: "बोलें या Enter दबाएँ",
+        listening: "सुन रहा हूँ... अब बोलें",
+        greeting: "नमस्ते! मैं आपका इवेंट सेवा AI सहायक हूँ। कुछ ही मिनटों में आपके लिए सही स्टेज सेटअप तैयार करूँगा। आप कौन-सा इवेंट प्लान कर रहे हैं?",
+        eventType: "बहुत अच्छा। अब अपनी स्टेज का आकार बताइए। उदाहरण: चौड़ाई 40 फुट और ऊँचाई 20 फुट।",
+        dimensions: "ठीक है। मैंने आपकी स्टेज को {width} फुट चौड़ा और {height} फुट ऊँचा सेट किया है। अब LED स्टाइल चुनिए।",
+        led: "बहुत बढ़िया। मैंने {ledStyle} LED स्टाइल लागू कर दी है। अब साउंड सिस्टम चुनिए।",
+        sound: "उत्तम। मैंने {soundSystem} साउंड सिस्टम सेट कर दिया है। क्या आपको दोनों, केवल LED, या केवल DJ चाहिए?",
+        equipment: "ठीक है। मैंने {equipment} सेटअप सेव कर लिया है। स्टेज डिज़ाइन बनाने के लिए बनाओ कहिए।",
+        generate: "अब आपकी स्टेज डिज़ाइन बना रहा हूँ। जादू देखिए।",
+        submit: "अब आपकी सर्विस रिक्वेस्ट भेज रहा हूँ। एडमिन टीम जल्द समीक्षा करेगी।",
+        help: "मैं स्टेज साइज, LED स्टाइल, साउंड सिस्टम, उपकरण चयन, बनाओ, और भेजो में मदद कर सकता हूँ।",
+        unknown: "मैं मदद के लिए यहाँ हूँ। कृपया बताइए आप कौन-सा इवेंट प्लान कर रहे हैं या मदद कहिए।",
+        acknowledge: "अच्छा। अब क्या बदलना है?"
+      },
+      mr: {
+        assistantTitle: "इव्हेंट सेवा AI सहाय्यक",
+        guideMsg: "तुमच्या इव्हेंटच्या गरजा सांगा. रुंदी, उंची, LED, साउंड, आणि उपकरण सेटअपमध्ये मी मदत करेन.",
+        transcriptTitle: "संवाद इतिहास",
+        clear: "काढा",
+        speak: "🎙️ बोला",
+        wakeOn: "जागे करा: सुरू",
+        wakeOff: "जागे करा: बंद",
+        tapSpeak: "बोला किंवा Enter दाबा",
+        listening: "ऐकत आहे... आता बोला",
+        greeting: "नमस्कार! मी तुमचा इव्हेंट सेवा AI सहाय्यक आहे. काही मिनिटांत तुमच्यासाठी योग्य स्टेज सेटअप तयार करेन. तुम्ही कोणता इव्हेंट प्लॅन करत आहात?",
+        eventType: "छान. आता तुमच्या स्टेजचे माप सांगा. उदाहरण: रुंदी 40 फूट आणि उंची 20 फूट.",
+        dimensions: "ठीक आहे. मी तुमची स्टेज {width} फूट रुंद आणि {height} फूट उंच सेट केली आहे. आता LED स्टाइल निवडा.",
+        led: "अप्रतिम. मी {ledStyle} LED स्टाइल लागू केली आहे. आता साउंड सिस्टम निवडा.",
+        sound: "उत्कृष्ट. मी {soundSystem} साउंड सिस्टम सेट केली आहे. तुम्हाला दोन्ही, फक्त LED, की फक्त DJ हवे आहे?",
+        equipment: "ठीक आहे. मी {equipment} सेटअप जतन केला आहे. स्टेज डिझाइन तयार करण्यासाठी तयार करा म्हणा.",
+        generate: "आता तुमची स्टेज डिझाइन तयार करत आहे. जादू पाहा.",
+        submit: "आता तुमची सेवा विनंती पाठवत आहे. अॅडमिन टीम लवकरच पाहील.",
+        help: "मी स्टेज आकार, LED स्टाइल, साउंड सिस्टम, उपकरण निवड, तयार करा, आणि पाठवा यामध्ये मदत करू शकतो.",
+        unknown: "मी मदतीसाठी येथे आहे. तुम्ही कोणता इव्हेंट प्लॅन करत आहात ते सांगा किंवा मदत म्हणा.",
+        acknowledge: "छान. आता काय बदलायचे आहे?"
+      },
+      kn: {
+        assistantTitle: "ಈವೆಂಟ್ ಸೇವೆ AI ಸಹಾಯಕ",
+        guideMsg: "ನಿಮ್ಮ ಈವೆಂಟ್ ಅಗತ್ಯಗಳನ್ನು ಹೇಳಿ. ಅಗಲ, ಎತ್ತರ, LED, ಧ್ವನಿ, ಮತ್ತು ಉಪಕರಣ ವ್ಯವಸ್ಥೆಯಲ್ಲಿ ನಾನು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.",
+        transcriptTitle: "ಪಠ್ಯ ಇತಿಹಾಸ",
+        clear: "ತೆರವುಗೊಳಿಸಿ",
+        speak: "🎙️ ಮಾತನಾಡಿ",
+        wakeOn: "ಎಚ್ಚರಿಕೆ: ಆನ್",
+        wakeOff: "ಎಚ್ಚರಿಕೆ: ಆಫ್",
+        tapSpeak: "ಮಾತನಾಡಿ ಅಥವಾ Enter ಒತ್ತಿರಿ",
+        listening: "ಕೇಳುತ್ತಿದ್ದೇನೆ... ಈಗ ಮಾತನಾಡಿ",
+        greeting: "ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಈವೆಂಟ್ ಸೇವೆ AI ಸಹಾಯಕ. ಕೆಲ ನಿಮಿಷಗಳಲ್ಲಿ ನಿಮಗಾಗಿ ಸರಿಯಾದ ಸ್ಟೇಜ್ ಸೆಟಪ್ ಅನ್ನು ರೂಪಿಸುತ್ತೇನೆ. ನೀವು ಯಾವ ಈವೆಂಟ್ ಯೋಜಿಸುತ್ತಿದ್ದೀರಿ?",
+        eventType: "ಚೆನ್ನಾಗಿದೆ. ಈಗ ನಿಮ್ಮ ಸ್ಟೇಜ್ ಗಾತ್ರವನ್ನು ಹೇಳಿ. ಉದಾಹರಣೆ: ಅಗಲ 40 ಅಡಿ ಮತ್ತು ಎತ್ತರ 20 ಅಡಿ.",
+        dimensions: "ಸರಿಯಾಗಿದೆ. ನಿಮ್ಮ ಸ್ಟೇಜ್ ಅನ್ನು {width} ಅಡಿ ಅಗಲ ಮತ್ತು {height} ಅಡಿ ಎತ್ತರವಾಗಿ ಹೊಂದಿಸಿದ್ದೇನೆ. ಈಗ LED ಶೈಲಿ ಆರಿಸಿ.",
+        led: "ಅದ್ಭುತ. ನಾನು {ledStyle} LED ಶೈಲಿಯನ್ನು ಅನ್ವಯಿಸಿದ್ದೇನೆ. ಈಗ ಧ್ವನಿ ವ್ಯವಸ್ಥೆ ಆರಿಸಿ.",
+        sound: "ಉತ್ತಮ. ನಾನು {soundSystem} ಧ್ವನಿ ವ್ಯವಸ್ಥೆಯನ್ನು ಹೊಂದಿಸಿದ್ದೇನೆ. ನಿಮಗೆ ಎರಡೂ, LED ಮಾತ್ರ, ಅಥವಾ DJ ಮಾತ್ರ ಬೇಕೇ?",
+        equipment: "ಸರಿಯಾಗಿದೆ. ನಾನು {equipment} ಸೆಟಪ್ ಅನ್ನು ಉಳಿಸಿದ್ದೇನೆ. ಸ್ಟೇಜ್ ವಿನ್ಯಾಸ ಮಾಡಲು ರಚಿಸಿ ಎಂದು ಹೇಳಿ.",
+        generate: "ಈಗ ನಿಮ್ಮ ಸ್ಟೇಜ್ ವಿನ್ಯಾಸವನ್ನು ರಚಿಸುತ್ತಿದ್ದೇನೆ. ಮಾಯೆಯನ್ನು ನೋಡಿ.",
+        submit: "ಈಗ ನಿಮ್ಮ ಸೇವಾ ವಿನಂತಿಯನ್ನು ಕಳುಹಿಸುತ್ತಿದ್ದೇನೆ. ಆಡ್ಮಿನ್ ತಂಡ ಶೀಘ್ರದಲ್ಲೇ ಪರಿಶೀಲಿಸುತ್ತದೆ.",
+        help: "ಸ್ಟೇಜ್ ಗಾತ್ರ, LED ಶೈಲಿ, ಧ್ವನಿ ವ್ಯವಸ್ಥೆ, ಉಪಕರಣ ಆಯ್ಕೆ, ರಚಿಸಿ, ಮತ್ತು ಕಳುಹಿಸಿ ವಿಷಯಗಳಲ್ಲಿ ನಾನು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.",
+        unknown: "ನಾನು ಸಹಾಯಕ್ಕೆ ಇಲ್ಲಿದ್ದೇನೆ. ನೀವು ಯಾವ ಈವೆಂಟ್ ಯೋಜಿಸುತ್ತಿದ್ದೀರಿ ಅಥವಾ ಸಹಾಯ ಎಂದು ಹೇಳಿ.",
+        acknowledge: "ಸರಿ. ಈಗ ಏನು ಬದಲಾಯಿಸಬೇಕು?"
+      },
+      ml: {
+        assistantTitle: "ഇവന്റ് സേവന AI സഹായകൻ",
+        guideMsg: "നിങ്ങളുടെ ഇവന്റ് ആവശ്യങ്ങൾ പറയൂ. വീതി, ഉയരം, LED, ശബ്ദം, ഉപകരണം ക്രമീകരണം എന്നിവയിൽ ഞാൻ സഹായിക്കും.",
+        transcriptTitle: "സംഭാഷണ ചരിത്രം",
+        clear: "തെളിയിക്കുക",
+        speak: "🎙️ സംസാരിക്കുക",
+        wakeOn: "വേക്ക്: ഓൺ",
+        wakeOff: "വേക്ക്: ഓഫ്",
+        tapSpeak: "സംസാരിക്കുക അല്ലെങ്കിൽ Enter അമർത്തുക",
+        listening: "കേട്ടുകൊണ്ടിരിക്കുന്നു... ഇപ്പോൾ സംസാരിക്കുക",
+        greeting: "നമസ്കാരം! ഞാൻ നിങ്ങളുടെ ഇവന്റ് സേവന AI സഹായകനാണ്. ഏതാനും മിനിറ്റുകളിൽ നിങ്ങളുടെ വേണ്ടി ശരിയായ സ്റ്റേജ് സജ്ജീകരണം ഒരുക്കാം. നിങ്ങൾ ഏതു ഇവന്റാണ് പദ്ധതിയിടുന്നത്?",
+        eventType: "നല്ലത്. ഇപ്പോൾ നിങ്ങളുടെ സ്റ്റേജ് അളവുകൾ പറയൂ. ഉദാഹരണം: വീതി 40 അടി, ഉയരം 20 അടി.",
+        dimensions: "ശരി. നിങ്ങളുടെ സ്റ്റേജ് {width} അടി വീതിയും {height} അടി ഉയരവുമാക്കി സജ്ജമാക്കി. ഇപ്പോൾ LED ശൈലി തിരഞ്ഞെടുക്കുക.",
+        led: "അദ്ഭുതം. ഞാൻ {ledStyle} LED ശൈലി പ്രയോഗിച്ചു. ഇപ്പോൾ ശബ്ദ സംവിധാനം തിരഞ്ഞെടുക്കുക.",
+        sound: "മികച്ചത്. ഞാൻ {soundSystem} ശബ്ദ സംവിധാനം സജ്ജമാക്കി. നിങ്ങൾക്ക് രണ്ടും, LED മാത്രം, അല്ലെങ്കിൽ DJ മാത്രം വേണോ?",
+        equipment: "ശരി. ഞാൻ {equipment} സജ്ജീകരണം സൂക്ഷിച്ചു. സ്റ്റേജ് ഡിസൈൻ നിർമ്മിക്കാൻ ഉണ്ടാക്കുക എന്ന് പറയൂ.",
+        generate: "ഇപ്പോൾ നിങ്ങളുടെ സ്റ്റേജ് ഡിസൈൻ നിർമ്മിക്കുന്നു. മായാജാലം കാണൂ.",
+        submit: "ഇപ്പോൾ നിങ്ങളുടെ സേവന അഭ്യർത്ഥന അയക്കുന്നു. അഡ്മിൻ ടീം ഉടൻ പരിശോധിക്കും.",
+        help: "സ്റ്റേജ് വലുപ്പം, LED ശൈലി, ശബ്ദ സംവിധാനം, ഉപകരണം തിരഞ്ഞെടുപ്പ്, ഉണ്ടാക്കുക, അയയ്ക്കുക എന്നിവയിൽ ഞാൻ സഹായിക്കും.",
+        unknown: "സഹായിക്കാൻ ഞാൻ ഇവിടെ തന്നെയുണ്ട്. നിങ്ങൾ ഏത് ഇവന്റ് പദ്ധതിയിടുന്നു എന്ന് പറയൂ അല്ലെങ്കിൽ സഹായം പറയൂ.",
+        acknowledge: "ശരി. ഇനി എന്ത് മാറ്റണം?"
+      },
+      bn: {
+        assistantTitle: "ইভেন্ট পরিষেবা AI সহকারী",
+        guideMsg: "আপনার ইভেন্টের চাহিদা বলুন। প্রস্থ, উচ্চতা, LED, সাউন্ড, এবং সরঞ্জাম সেটআপে আমি সাহায্য করব।",
+        transcriptTitle: "লেখা ইতিহাস",
+        clear: "মুছুন",
+        speak: "🎙️ বলুন",
+        wakeOn: "ওয়েক: চালু",
+        wakeOff: "ওয়েক: বন্ধ",
+        tapSpeak: "বলুন বা Enter চাপুন",
+        listening: "শুনছি... এখন বলুন",
+        greeting: "নমস্কার! আমি আপনার ইভেন্ট পরিষেবা AI সহকারী। কয়েক মিনিটের মধ্যে আপনার জন্য সঠিক স্টেজ সেটআপ তৈরি করব। আপনি কোন ইভেন্ট পরিকল্পনা করছেন?",
+        eventType: "ভাল। এখন আপনার স্টেজের মাপ বলুন। উদাহরণ: প্রস্থ 40 ফুট এবং উচ্চতা 20 ফুট।",
+        dimensions: "ঠিক আছে। আমি আপনার স্টেজকে {width} ফুট চওড়া এবং {height} ফুট উঁচু করেছি। এখন LED স্টাইল বেছে নিন।",
+        led: "দারুণ। আমি {ledStyle} LED স্টাইল প্রয়োগ করেছি। এখন সাউন্ড সিস্টেম বেছে নিন।",
+        sound: "চমৎকার। আমি {soundSystem} সাউন্ড সিস্টেম সেট করেছি। আপনি কি দুটো, শুধু LED, না শুধু DJ চান?",
+        equipment: "ঠিক আছে। আমি {equipment} সেটআপ সংরক্ষণ করেছি। স্টেজ ডিজাইন বানাতে তৈরি করুন বলুন।",
+        generate: "এখন আপনার স্টেজ ডিজাইন তৈরি করছি। জাদু দেখুন।",
+        submit: "এখন আপনার সার্ভিস অনুরোধ পাঠাচ্ছি। অ্যাডমিন টিম শীঘ্রই পর্যালোচনা করবে।",
+        help: "স্টেজ সাইজ, LED স্টাইল, সাউন্ড সিস্টেম, সরঞ্জাম নির্বাচন, তৈরি করুন, এবং পাঠান বিষয়ে আমি সাহায্য করতে পারি।",
+        unknown: "আমি সাহায্য করার জন্য এখানে আছি। আপনি কোন ইভেন্ট পরিকল্পনা করছেন বলুন বা সাহায্য বলুন।",
+        acknowledge: "ঠিক আছে। এখন কী পরিবর্তন করতে হবে?"
+      },
+      ne: {
+        assistantTitle: "इभेन्ट सेवा AI सहायक",
+        guideMsg: "आफ्नो इभेन्टका आवश्यकताहरू भन्नुहोस्। चौडाइ, उचाइ, LED, साउन्ड, र उपकरण सेटअपमा म सहयोग गर्नेछु।",
+        transcriptTitle: "संवाद इतिहास",
+        clear: "सफा गर्नुहोस्",
+        speak: "🎙️ बोल्नुहोस्",
+        wakeOn: "जागरण: खुला",
+        wakeOff: "जागरण: बन्द",
+        tapSpeak: "बोल्नुहोस् वा Enter थिच्नुहोस्",
+        listening: "सुन्दैछु... अब बोल्नुहोस्",
+        greeting: "नमस्कार! म तपाईंको इभेन्ट सेवा AI सहायक हुँ। केही मिनेटमै तपाईंको लागि सही स्टेज सेटअप तयार गर्नेछु। तपाईं कुन इभेन्ट योजना गर्दै हुनुहुन्छ?",
+        eventType: "राम्रो। अब आफ्नो स्टेजको मापन भन्नुहोस्। उदाहरण: चौडाइ 40 फिट र उचाइ 20 फिट।",
+        dimensions: "ठीक छ। मैले तपाईंको स्टेजलाई {width} फिट चौडा र {height} फिट उचाइमा सेट गरेको छु। अब LED शैली छान्नुहोस्।",
+        led: "उत्कृष्ट। मैले {ledStyle} LED शैली लागू गरेको छु। अब साउन्ड सिस्टम छान्नुहोस्।",
+        sound: "उत्कृष्ट। मैले {soundSystem} साउन्ड सिस्टम सेट गरेको छु। तपाईंलाई दुवै, LED मात्र, वा DJ मात्र चाहिन्छ?",
+        equipment: "ठीक छ। मैले {equipment} सेटअप सुरक्षित गरेको छु। स्टेज डिजाइन बनाउन बनाउनुहोस् भन्नुहोस्।",
+        generate: "अब तपाईंको स्टेज डिजाइन बनाइरहेको छु। जादू हेर्नुहोस्।",
+        submit: "अब तपाईंको सेवा अनुरोध पठाउँदैछु। एडमिन टोलीले छिट्टै समीक्षा गर्नेछ।",
+        help: "म स्टेज साइज, LED शैली, साउन्ड सिस्टम, उपकरण चयन, बनाउनुहोस्, र पठाउनुहोस् मा सहयोग गर्न सक्छु।",
+        unknown: "म सहयोगका लागि यहाँ छु। तपाईं कुन इभेन्ट योजना गर्दै हुनुहुन्छ भन्नुहोस् वा सहयोग भन्नुहोस्।",
+        acknowledge: "ठीक छ। अब के परिवर्तन गर्ने?"
+      },
+      si: {
+        assistantTitle: "උත්සව සේවා AI සහායක",
+        guideMsg: "ඔබගේ උත්සව අවශ්‍යතා කියන්න. පළල, උස, LED, ශබ්ද, සහ උපකරණ සැකසුම් වලින් මම උදව් කරමි.",
+        transcriptTitle: "සංවාද ඉතිහාසය",
+        clear: "මකන්න",
+        speak: "🎙️ කතා කරන්න",
+        wakeOn: "වേക്ക്: ක්‍රියාත්මක",
+        wakeOff: "වേക്ക്: අක්‍රිය",
+        tapSpeak: "කතා කරන්න හෝ Enter ඔබන්න",
+        listening: "සවන් දෙමින්... දැන් කතා කරන්න",
+        greeting: "ආයුබෝවන්! මම ඔබගේ උත්සව සේවා AI සහායකයි. මිනිත්තු කිහිපයකින්ම ඔබට ගැලපෙන වේදිකා සැකසුමක් සකස් කරමි. ඔබ කුමන උත්සවයක් සැලසුම් කරන්නේද?",
+        eventType: "හොඳයි. දැන් ඔබගේ වේදිකා ප්‍රමාණ කියන්න. උදාහරණය: පළල 40 අඩි සහ උස 20 අඩි.",
+        dimensions: "හරි. ඔබගේ වේදිකාව {width} අඩි පළල සහ {height} අඩි උස ලෙස සකසා ඇත. දැන් LED ශෛලිය තෝරන්න.",
+        led: "විශිෂ්ටයි. මම {ledStyle} LED ශෛලිය යොදා ඇත. දැන් ශබ්ද පද්ධතිය තෝරන්න.",
+        sound: "ඉතා හොඳයි. මම {soundSystem} ශබ්ද පද්ධතිය සකසා ඇත. ඔබට දෙකම, LED පමණක්, හෝ DJ පමණක් අවශ්‍යද?",
+        equipment: "හරි. මම {equipment} සැකසුම සුරකිමි. වේදිකා නිර්මාණය සඳහා සාදන්න කියන්න.",
+        generate: "දැන් ඔබගේ වේදිකා නිර්මාණය සකස් කරමි. මැජික් බලන්න.",
+        submit: "දැන් ඔබගේ සේවා ඉල්ලීම යවමි. පාලක කණ්ඩායම ඉක්මනින් විමසනු ඇත.",
+        help: "වේදිකා ප්‍රමාණ, LED ශෛලිය, ශබ්ද පද්ධතිය, උපකරණ තේරීම, සාදන්න, සහ යවන්න මත මම උදව් කරමි.",
+        unknown: "මම උදව් කිරීමට මෙහි සිටිමි. ඔබ සැලසුම් කරන උත්සවය කියන්න හෝ උදව් කියන්න.",
+        acknowledge: "හරි. දැන් කුමක් වෙනස් කළ යුතුද?"
+      },
+      pa: {
+        assistantTitle: "ਈਵੈਂਟ ਸੇਵਾ AI ਸਹਾਇਕ",
+        guideMsg: "ਆਪਣੀਆਂ ਈਵੈਂਟ ਜ਼ਰੂਰਤਾਂ ਦੱਸੋ। ਚੌੜਾਈ, ਉਚਾਈ, LED, ਸਾਊਂਡ, ਅਤੇ ਸਾਜ਼ੋ-ਸਾਮਾਨ ਸੈਟਅੱਪ ਵਿੱਚ ਮੈਂ ਮਦਦ ਕਰਾਂਗਾ।",
+        transcriptTitle: "ਗੱਲਬਾਤ ਇਤਿਹਾਸ",
+        clear: "ਸਾਫ਼ ਕਰੋ",
+        speak: "🎙️ ਬੋਲੋ",
+        wakeOn: "ਵੇਕ: ਚਾਲੂ",
+        wakeOff: "ਵੇਕ: ਬੰਦ",
+        tapSpeak: "ਬੋਲੋ ਜਾਂ Enter ਦਬਾਓ",
+        listening: "ਸੁਣ ਰਿਹਾ ਹਾਂ... ਹੁਣ ਬੋਲੋ",
+        greeting: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡਾ ਈਵੈਂਟ ਸੇਵਾ AI ਸਹਾਇਕ ਹਾਂ। ਕੁਝ ਮਿੰਟਾਂ ਵਿੱਚ ਤੁਹਾਡੇ ਲਈ ਸਹੀ ਸਟੇਜ ਸੈਟਅੱਪ ਤਿਆਰ ਕਰਾਂਗਾ। ਤੁਸੀਂ ਕਿਹੜਾ ਈਵੈਂਟ ਯੋਜ ਰਹੇ ਹੋ?",
+        eventType: "ਵਧੀਆ। ਹੁਣ ਆਪਣੀ ਸਟੇਜ ਦੀ ਮਾਪ ਦੱਸੋ। ਉਦਾਹਰਨ: ਚੌੜਾਈ 40 ਫੁੱਟ ਅਤੇ ਉਚਾਈ 20 ਫੁੱਟ।",
+        dimensions: "ਠੀਕ ਹੈ। ਮੈਂ ਤੁਹਾਡੀ ਸਟੇਜ ਨੂੰ {width} ਫੁੱਟ ਚੌੜਾ ਅਤੇ {height} ਫੁੱਟ ਉੱਚਾ ਸੈੱਟ ਕੀਤਾ ਹੈ। ਹੁਣ LED ਸ਼ੈਲੀ ਚੁਣੋ।",
+        led: "ਸ਼ਾਨਦਾਰ। ਮੈਂ {ledStyle} LED ਸ਼ੈਲੀ ਲਾਗੂ ਕੀਤੀ ਹੈ। ਹੁਣ ਸਾਊਂਡ ਸਿਸਟਮ ਚੁਣੋ।",
+        sound: "ਉੱਤਮ। ਮੈਂ {soundSystem} ਸਾਊਂਡ ਸਿਸਟਮ ਸੈੱਟ ਕੀਤਾ ਹੈ। ਕੀ ਤੁਹਾਨੂੰ ਦੋਵੇਂ, ਸਿਰਫ਼ LED, ਜਾਂ ਸਿਰਫ਼ DJ ਚਾਹੀਦਾ ਹੈ?",
+        equipment: "ਠੀਕ ਹੈ। ਮੈਂ {equipment} ਸੈੱਟਅੱਪ ਸੰਭਾਲ ਲਿਆ ਹੈ। ਸਟੇਜ ਡਿਜ਼ਾਈਨ ਬਣਾਉਣ ਲਈ ਬਣਾਓ ਕਹੋ।",
+        generate: "ਹੁਣ ਤੁਹਾਡੀ ਸਟੇਜ ਡਿਜ਼ਾਈਨ ਬਣਾ ਰਿਹਾ ਹਾਂ। ਜਾਦੂ ਵੇਖੋ।",
+        submit: "ਹੁਣ ਤੁਹਾਡੀ ਸੇਵਾ ਬੇਨਤੀ ਭੇਜ ਰਿਹਾ ਹਾਂ। ਐਡਮਿਨ ਟੀਮ ਜਲਦੀ ਸਮੀਖਿਆ ਕਰੇਗੀ।",
+        help: "ਮੈਂ ਸਟੇਜ ਸਾਈਜ਼, LED ਸ਼ੈਲੀ, ਸਾਊਂਡ ਸਿਸਟਮ, ਸਾਜ਼ੋ-ਸਾਮਾਨ ਚੋਣ, ਬਣਾਓ, ਅਤੇ ਭੇਜੋ ਵਿੱਚ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ।",
+        unknown: "ਮੈਂ ਮਦਦ ਲਈ ਇੱਥੇ ਹਾਂ। ਕਿਰਪਾ ਕਰਕੇ ਦੱਸੋ ਤੁਸੀਂ ਕਿਹੜਾ ਈਵੈਂਟ ਯੋਜ ਰਹੇ ਹੋ ਜਾਂ ਮਦਦ ਕਹੋ।",
+        acknowledge: "ਵਧੀਆ। ਹੁਣ ਕੀ ਬਦਲਣਾ ਹੈ?"
+      },
+      as: {
+        assistantTitle: "ইভেণ্ট সেৱা AI সহায়ক",
+        guideMsg: "আপোনাৰ ইভেণ্টৰ প্ৰয়োজনীয়তা কওক। প্ৰস্থ, উচ্চতা, LED, শব্দ, আৰু সঁজুলি ছেটআপত মই সহায় কৰিম।",
+        transcriptTitle: "কথোপকথনৰ ইতিহাস",
+        clear: "মচক",
+        speak: "🎙️ কওক",
+        wakeOn: "ৱেক: চালু",
+        wakeOff: "ৱেক: বন্ধ",
+        tapSpeak: "কওক বা Enter টিপক",
+        listening: "শুনিছোঁ... এতিয়া কওক",
+        greeting: "নমস্কাৰ! মই আপোনাৰ ইভেণ্ট সেৱা AI সহায়ক। কেইমিনিটমানতে আপোনাৰ বাবে সঠিক ষ্টেজ ছেটআপ সাজি দিম। আপুনি কোন ইভেণ্ট পৰিকল্পনা কৰিছে?",
+        eventType: "ভাল। এতিয়া আপোনাৰ ষ্টেজৰ মাপ কওক। উদাহৰণ: প্ৰস্থ 40 ফুট আৰু উচ্চতা 20 ফুট।",
+        dimensions: "ঠিক আছে। মই আপোনাৰ ষ্টেজক {width} ফুট প্ৰস্থ আৰু {height} ফুট উচ্চতা কৰি ছেট কৰিছোঁ। এতিয়া LED ষ্টাইল বাছক।",
+        led: "অদ্ভুত। মই {ledStyle} LED ষ্টাইল প্ৰয়োগ কৰিছোঁ। এতিয়া শব্দ ব্যৱস্থা বাছক।",
+        sound: "উৎকৃষ্ট। মই {soundSystem} শব্দ ব্যৱস্থা ছেট কৰিছোঁ। আপোনাৰ দুয়োটাই, কেৱল LED, নে কেৱল DJ লাগে?",
+        equipment: "ঠিক আছে। মই {equipment} ছেটআপ সংৰক্ষণ কৰিছোঁ। ষ্টেজ ডিজাইন বনাবলৈ বনাওক কওক।",
+        generate: "এতিয়া আপোনাৰ ষ্টেজ ডিজাইন বনাইছোঁ। যাদু চাওক।",
+        submit: "এতিয়া আপোনাৰ সেৱা অনুৰোধ পঠিয়াইছোঁ। এডমিন দলে সোনকালে পৰ্যালোচনা কৰিব।",
+        help: "মই ষ্টেজ আকাৰ, LED ষ্টাইল, শব্দ ব্যৱস্থা, সঁজুলি বাছনি, বনাওক, আৰু পঠাওকত সহায় কৰিব পাৰোঁ।",
+        unknown: "মই সহায়ৰ বাবে ইয়াত আছোঁ। আপুনি কোন ইভেণ্ট পৰিকল্পনা কৰিছে কওক বা সহায় কওক।",
+        acknowledge: "ভাল। এতিয়া কি সলনি কৰিব?"
+      },
+      or: {
+        assistantTitle: "ଇଭେଣ୍ଟ ସେବା AI ସହାୟକ",
+        guideMsg: "ଆପଣଙ୍କ ଇଭେଣ୍ଟ ଆବଶ୍ୟକତା କହନ୍ତୁ। ପ୍ରସ୍ଥ, ଉଚ୍ଚତା, LED, ସାଉଣ୍ଡ, ଏବଂ ସାମଗ୍ରୀ ସେଟଅପରେ ମୁଁ ସହାୟତା କରିବି।",
+        transcriptTitle: "କଥୋପକଥନ ଇତିହାସ",
+        clear: "ସଫା କରନ୍ତୁ",
+        speak: "🎙️ କହନ୍ତୁ",
+        wakeOn: "ୱେକ୍: ଚାଲୁ",
+        wakeOff: "ୱେକ୍: ବନ୍ଦ",
+        tapSpeak: "କହନ୍ତୁ କିମ୍ବା Enter ଦବାନ୍ତୁ",
+        listening: "ଶୁଣୁଛି... ଏବେ କହନ୍ତୁ",
+        greeting: "ନମସ୍କାର! ମୁଁ ଆପଣଙ୍କର ଇଭେଣ୍ଟ ସେବା AI ସହାୟକ। କିଛି ମିନିଟରେ ଆପଣଙ୍କ ପାଇଁ ଠିକ୍ ଷ୍ଟେଜ୍ ସେଟଅପ୍ ତିଆରି କରିଦେବି। ଆପଣ କୌଣସି ଇଭେଣ୍ଟ ପ୍ଲାନ୍ କରୁଛନ୍ତି?",
+        eventType: "ଭଲ। ଏବେ ଆପଣଙ୍କ ଷ୍ଟେଜର ମାପ କହନ୍ତୁ। ଉଦାହରଣ: ପ୍ରସ୍ଥ 40 ଫୁଟ୍ ଏବଂ ଉଚ୍ଚତା 20 ଫୁଟ୍।",
+        dimensions: "ଠିକ୍ ଅଛି। ମୁଁ ଆପଣଙ୍କ ଷ୍ଟେଜକୁ {width} ଫୁଟ୍ ପ୍ରସ୍ଥ ଏବଂ {height} ଫୁଟ୍ ଉଚ୍ଚତାରେ ସେଟ୍ କରିଛି। ଏବେ LED ଶୈଳୀ ବାଛନ୍ତୁ।",
+        led: "ଦୁର୍ଦାନ୍ତ। ମୁଁ {ledStyle} LED ଶୈଳୀ ଲାଗୁ କରିଛି। ଏବେ ସାଉଣ୍ଡ ସିଷ୍ଟମ୍ ବାଛନ୍ତୁ।",
+        sound: "ଉତ୍କୃଷ୍ଟ। ମୁଁ {soundSystem} ସାଉଣ୍ଡ ସିଷ୍ଟମ୍ ସେଟ୍ କରିଛି। ଆପଣଙ୍କୁ ଦୁଇଟି, LED କେବଳ, କିମ୍ବା DJ କେବଳ ଚାହିଁଦିଆ?",
+        equipment: "ଠିକ୍ ଅଛି। ମୁଁ {equipment} ସେଟଅପ୍ ସଂରକ୍ଷଣ କରିଛି। ଷ୍ଟେଜ୍ ଡିଜାଇନ୍ ବନାଇବାକୁ ବନାନ୍ତୁ କହନ୍ତୁ।",
+        generate: "ଏବେ ଆପଣଙ୍କ ଷ୍ଟେଜ୍ ଡିଜାଇନ୍ ବନାଉଛି। ମାୟା ଦେଖନ୍ତୁ।",
+        submit: "ଏବେ ଆପଣଙ୍କ ସେବା ଅନୁରୋଧ ପଠାଉଛି। ଏଡମିନ୍ ଟିମ୍ ଶୀଘ୍ର ସମୀକ୍ଷା କରିବ।",
+        help: "ମୁଁ ଷ୍ଟେଜ୍ ଆକାର, LED ଶୈଳୀ, ସାଉଣ୍ଡ ସିଷ୍ଟମ୍, ସାମଗ୍ରୀ ବାଛନା, ବନାନ୍ତୁ, ଏବଂ ପଠାନ୍ତୁରେ ସହାୟତା କରିପାରିବି।",
+        unknown: "ମୁଁ ସହାୟତା ପାଇଁ ଏଠାରେ ଅଛି। ଆପଣ କେଉଁ ଇଭେଣ୍ଟ ପ୍ଲାନ୍ କରୁଛନ୍ତି କହନ୍ତୁ କିମ୍ବା ସହାୟତା କହନ୍ତୁ।",
+        acknowledge: "ଭଲ। ଏବେ କଣ ପରିବର୍ତ୍ତନ କରିବା?"
+      },
+      ur: {
+        assistantTitle: "ایونٹ سروس AI معاون",
+        guideMsg: "اپنی ایونٹ کی ضروریات بتائیں۔ چوڑائی، اونچائی، LED، ساؤنڈ، اور سامان سیٹ اپ میں میں مدد کروں گا۔",
+        transcriptTitle: "گفتگو کی تاریخ",
+        clear: "صاف کریں",
+        speak: "🎙️ بولیں",
+        wakeOn: "ویک: آن",
+        wakeOff: "ویک: آف",
+        tapSpeak: "بولیں یا Enter دبائیں",
+        listening: "سن رہا ہوں... اب بولیں",
+        greeting: "السلام علیکم! میں آپ کا ایونٹ سروس AI معاون ہوں۔ چند منٹوں میں آپ کے لیے صحیح اسٹیج سیٹ اپ تیار کروں گا۔ آپ کون سا ایونٹ پلان کر رہے ہیں؟",
+        eventType: "بہت اچھا۔ اب اپنے اسٹیج کے پیمانے بتائیں۔ مثال: چوڑائی 40 فٹ اور اونچائی 20 فٹ۔",
+        dimensions: "ٹھیک ہے۔ میں نے آپ کا اسٹیج {width} فٹ چوڑا اور {height} فٹ اونچا سیٹ کر دیا ہے۔ اب LED اسٹائل منتخب کریں۔",
+        led: "زبردست۔ میں نے {ledStyle} LED اسٹائل لاگو کر دیا ہے۔ اب ساؤنڈ سسٹم منتخب کریں۔",
+        sound: "بہترین۔ میں نے {soundSystem} ساؤنڈ سسٹم سیٹ کر دیا ہے۔ کیا آپ کو دونوں، صرف LED، یا صرف DJ چاہیے؟",
+        equipment: "ٹھیک ہے۔ میں نے {equipment} سیٹ اپ محفوظ کر لیا ہے۔ اسٹیج ڈیزائن بنانے کے لیے بنائیں کہیں۔",
+        generate: "اب آپ کا اسٹیج ڈیزائن بنا رہا ہوں۔ جادو دیکھیں۔",
+        submit: "اب آپ کی سروس درخواست بھیج رہا ہوں۔ ایڈمن ٹیم جلد جائزہ لے گی۔",
+        help: "میں اسٹیج سائز، LED اسٹائل، ساؤنڈ سسٹم، سامان کے انتخاب، بنائیں، اور بھیجیں میں مدد کر سکتا ہوں۔",
+        unknown: "میں مدد کے لیے یہاں ہوں۔ براہِ کرم بتائیں آپ کون سا ایونٹ پلان کر رہے ہیں یا مدد کہیں۔",
+        acknowledge: "اچھا۔ اب کیا بدلنا ہے؟"
+      }
+    };
+
+    function assistantPhrase(key, vars = {}) {
+      const lang = getSelectedLanguageCode();
+      const bundle = assistantSpeechPhrases[lang] || assistantSpeechPhrases.en;
+      const template = bundle[key] || assistantSpeechPhrases.en[key] || '';
+      return template.replace(/\{(\w+)\}/g, (_, name) => String(vars[name] ?? ''));
+    }
+
+    function refreshAssistantChrome() {
+      const assistantTitle = document.querySelector('#eventGuideModal .guide-head strong');
+      const guideMsg = document.querySelector('.guide-msg');
+      const transcriptTitle = document.querySelector('#transcriptPanel strong');
+      const clearBtn = document.getElementById('clearTranscript');
+      const micBtn = document.getElementById('eventChatMic');
+      const wakeBtn = document.getElementById('wakeToggle');
+      const status = document.getElementById('speechStatus');
+      const enabledWake = localStorage.getItem('wakeEnabled') === 'true';
+
+      if (assistantTitle) assistantTitle.textContent = assistantPhrase('assistantTitle');
+      if (guideMsg) guideMsg.textContent = assistantPhrase('guideMsg');
+      if (transcriptTitle) transcriptTitle.textContent = assistantPhrase('transcriptTitle');
+      if (clearBtn) clearBtn.textContent = assistantPhrase('clear');
+      if (micBtn) micBtn.textContent = assistantPhrase('speak');
+      if (wakeBtn) wakeBtn.textContent = enabledWake ? assistantPhrase('wakeOn') : assistantPhrase('wakeOff');
+      if (status && !recognizing) {
+        status.textContent = assistantPhrase('tapSpeak');
+      }
+    }
+
+    function localizeAssistantResponse(intent, extracted, englishFallback) {
+      const lang = getSelectedLanguageCode();
+      const bundle = assistantSpeechPhrases[lang];
+      if (!bundle && lang !== 'en') {
+        // Fallback to voice-language selection when we don't have text translations yet.
+        return englishFallback;
+      }
+
+      switch (intent) {
+        case 'dimensions':
+          return assistantPhrase('dimensions', { width: extracted.width, height: extracted.height });
+        case 'led_choice':
+          return assistantPhrase('led', { ledStyle: extracted.ledStyle });
+        case 'sound_choice':
+          return assistantPhrase('sound', { soundSystem: extracted.soundSystem });
+        case 'equipment_choice':
+          return assistantPhrase('equipment', {
+            equipment: extracted.equipment === 'both' ? (lang === 'te' ? 'రెండూ LED మరియు DJ' : lang === 'ta' ? 'இரண்டும் LED மற்றும் DJ' : 'both LED and DJ')
+              : (extracted.equipment === 'led_only' ? (lang === 'te' ? 'LED మాత్రమే' : lang === 'ta' ? 'LED மட்டும்' : 'LED only') : (lang === 'te' ? 'DJ మాత్రమే' : lang === 'ta' ? 'DJ மட்டும்' : 'DJ only'))
+          });
+        case 'event_type':
+          return assistantPhrase('eventType');
+        case 'generate':
+          return assistantPhrase('generate');
+        case 'submit':
+          return assistantPhrase('submit');
+        case 'help':
+          return assistantPhrase('help');
+        case 'acknowledge':
+          return assistantPhrase('acknowledge');
+        case 'unknown':
+          return assistantPhrase('unknown');
+        default:
+          return englishFallback;
+      }
+    }
+
+    // Wake-word mapping for supported languages (regex)
+    const wakeHotwordMap = {
+      'en': /\b(hey|ok|okay)\s*(assistant|ai|help)\b/i,
+      'hi': /\b(हे|अरे)\s*(सहायक|असिस्टेंट|सहाय)\b/i,
+      'te': /\b(హే|ఓ)\s*(అసిస్టెంట్|సహాయక)\b/i,
+      'mr': /\b(हे|अरे)\s*(सहायक|असिस्टंट)\b/i,
+      'ta': /\b(ஹே|ஓ)\s*(அசிஸ்டന്റ്|உதவியாளர்)\b/i,
+      'bn': /\b(এই|হে)\s*(সহকারী|অ্যাসিস্ট্যান্ট)\b/i,
+      'ur': /\b(ہائے|ہیلو)\s*(اسسٹنٹ|مدد)\b/i,
+      'gu': /\b(હે|ઓ)\s*(સહાયક|અસિસ્ટન્ટ)\b/i,
+      'kn': /\b(ಹೇಯ್|ಹೇ)\s*(ಸಹಾಯಕ|ಅಸಿಸ್ಟೆಂಟ್)\b/i,
+      'ml': /\b(ഹേ|ഓ)\s*(അസിസ്റ്റന്റ്|സഹായി)\b/i,
+      'ne': /\b(हे|नमस्ते)\s*(सहायक|असिस्टेंट)\b/i,
+      'si': /\b(හේ|ආයු)\s*(සහයක|අසിസ്റ്റන්ට්)\b/i,
+      'pa': /\b(ਹੇ|ਓ)\s*(ਸਹਾਇਕ|ਅਸਿਸਟੈਂਟ)\b/i,
+      'or': /\b(ହେ|ଓ)\s*(ସହାୟକ|ଅସିଷ୍ଟ୍)\b/i
+    };
+
+    function speakText(text) {
+      
+      // NEW: Text-to-Speech for AI Assistant Voice Response
+      if (!window.speechSynthesis) {
+        console.warn("Web Speech API not supported in this browser");
+        return;
+      }
+      
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      // Create utterance
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Configure voice properties
+      utterance.rate = 1.0;           // Speed (0.1 - 10)
+      utterance.pitch = 1.0;          // Tone (0 - 2)
+      utterance.volume = 1.0;         // Volume (0 - 1)
+      const selectedLang = getSelectedSpeechLang();
+      utterance.lang = selectedLang;  // e.g., 'hi-IN'
+
+      // Optional: pick a voice that matches the selected language if available
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const family = selectedLang.split('-')[0];
+        const exactMatch = voices.find(v => (v.lang || '').toLowerCase() === selectedLang.toLowerCase());
+        const familyMatch = voices.find(v => (v.lang || '').toLowerCase().startsWith(family));
+        const neutralMatch = voices.find(v => {
+          const voiceLang = (v.lang || '').toLowerCase();
+          return voiceLang && !voiceLang.startsWith('en');
+        });
+        const match = exactMatch || familyMatch || neutralMatch || null;
+        if (match) utterance.voice = match;
+      }
+      
+      // Speak the text
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Conversation state machine for intelligent AI assistant
+    let assistantState = {
+      stage: "greeting",      // greeting -> eventType -> dimensions -> led -> sound -> equipment -> review -> complete
+      eventType: "",
+      hasAskQuestion: false,
+      conversationCount: 0
+    };
+
+    // AI Assistant Knowledge Base with Real-time Guidance
+    const assistanceFlows = {
+      greeting: {
+        prompt: "🎭 Hi! I'm your Event Service AI Assistant. I'll design your perfect stage setup in minutes. What kind of event are you planning? (e.g., college fest, wedding, concert, corporate event)",
+        nextStage: "eventType",
+        examples: ["College Fest", "Wedding Reception", "Corporate Conference", "Concert", "Product Launch"]
+      },
+      eventType: {
+        prompt: "Perfect! Now let's set up the stage. Tell me your stage dimensions. Example: 'width 40 feet and height 20 feet' or just '40 by 20'",
+        nextStage: "dimensions",
+        examples: ["20x10", "40x20", "60x30", "Just use standard size"]
+      },
+      dimensions: {
+        prompt: "Great dimensions! 📐 Now let's choose a LED design style. Pick one: geometric, pixel, wave, neon, hologram, spectrum, or stage3d",
+        options: ["Geometric (bold pattern)", "Pixel (grid look)", "Wave (flowing motion)", "Neon (vibrant edge)", "Spectrum (multi-color)", "Stage 3D (cinematic)"],
+        nextStage: "led"
+      },
+      led: {
+        prompt: "Awesome LED choice! 💡 Now for sound. Which system? Options: stereo (2 boxes), quad (4 boxes), surround (6 boxes), or line array (8 boxes)",
+        options: ["Stereo Pair (2 boxes)", "Quad System (4 boxes)", "Surround (6 boxes)", "Line Array (8 boxes - professional)"],
+        nextStage: "sound"
+      },
+      sound: {
+        prompt: "Excellent! 🔊 Do you want: 'both' (LED + DJ equipment), 'led only', or 'dj only'?",
+        options: ["Both (LED + DJ)", "LED Only", "DJ Only"],
+        nextStage: "equipment"
+      },
+      equipment: {
+        prompt: "Perfect! 🎨 Ready to see your design? Type 'generate' or 'show me' and I'll create the visual layout right now!",
+        nextStage: "review"
+      },
+      review: {
+        prompt: "Your event design is complete! 🌟 Type 'submit' when you're ready to submit this as a service request to the admin team.",
+        nextStage: "complete"
+      }
+    };
+
+    function detectIntent(input) {
+      // Returns: { intent: string, confidence: number, extracted: {} }
+      const lower = input.toLowerCase().trim();
+      
+      // Dimension detection
+      if (/(\d+)\s*(?:by|x|feet|ft|wide|height|size|dimension)/i.test(lower)) {
+        const nums = parseNumbers(input);
+        if (nums.length >= 2) {
+          return { 
+            intent: "dimensions", 
+            confidence: 0.95, 
+            extracted: { width: nums[0], height: nums[1] } 
+          };
+        }
+      }
+      
+      // Equipment choice detection (both, led only, dj only)
+      if (/both|full|led.*dj|dj.*led|everything|complete/i.test(lower)) {
+        return { 
+          intent: "equipment_choice", 
+          confidence: 0.9, 
+          extracted: { equipment: "both" } 
+        };
+      }
+      if (/led.*only|just.*led|only.*led/i.test(lower)) {
+        return { 
+          intent: "equipment_choice", 
+          confidence: 0.9, 
+          extracted: { equipment: "led_only" } 
+        };
+      }
+      if (/dj.*only|just.*dj|only.*dj/i.test(lower)) {
+        return { 
+          intent: "equipment_choice", 
+          confidence: 0.9, 
+          extracted: { equipment: "dj_only" } 
+        };
+      }
+      
+      // LED style detection
+      const ledMatch = parseLedChoice(lower);
+      if (ledMatch) {
+        return { 
+          intent: "led_choice", 
+          confidence: 0.9, 
+          extracted: { ledStyle: ledMatch } 
+        };
+      }
+      
+      // Sound system detection
+      const soundMatch = parseSoundChoice(lower);
+      if (soundMatch) {
+        return { 
+          intent: "sound_choice", 
+          confidence: 0.9, 
+          extracted: { soundSystem: soundMatch } 
+        };
+      }
+      
+      // Event type detection
+      if (/wedding|fest|conference|concert|launch|birthday|corporate|college|music|party|show|event/i.test(lower)) {
+        return { 
+          intent: "event_type", 
+          confidence: 0.85, 
+          extracted: { eventType: lower.substring(0, 50) } 
+        };
+      }
+
+      // Tamil/Telugu general acknowledgements and help keywords
+      if (/வணக்கம்|சரி|நன்றி|அருமை|சூப்பர்|ஆம்|இல்லை|ஹாய்|பேச|உதவி/i.test(lower) || /హలో|హాయ్|సరే|ధన్యవాదాలు|సహాయం|అవును|లేదు/i.test(lower)) {
+        return {
+          intent: /உதவி/i.test(lower) || /సహాయం/i.test(lower) ? "help" : "acknowledge",
+          confidence: 0.75,
+          extracted: {}
+        };
+      }
+
+      // Tamil/Telugu event type hints
+      if (/திருமணம்|கல்லூரி|கச்சேரி|கார்ப்பரேட்|விழா|பார்ட்டி/i.test(lower) || /వివాహం|కళాశాల|కాన్సర్ట్|కార్పొరేట్|వేడుక|పార్టీ/i.test(lower)) {
+        return {
+          intent: "event_type",
+          confidence: 0.8,
+          extracted: { eventType: lower.substring(0, 50) }
+        };
+      }
+      
+      // Generate request
+      if (/generate|create|render|design|visualize|show|make|draw|render|picture/i.test(lower)) {
+        return { 
+          intent: "generate", 
+          confidence: 0.9, 
+          extracted: { } 
+        };
+      }
+      
+      // Submit request
+      if (/submit|send|request|approve|apply|confirm/i.test(lower)) {
+        return { 
+          intent: "submit", 
+          confidence: 0.85, 
+          extracted: { } 
+        };
+      }
+      
+      // Help request
+      if (/help|guide|show options|what can|next step|how/i.test(lower)) {
+        return { 
+          intent: "help", 
+          confidence: 0.8, 
+          extracted: { } 
+        };
+      }
+      
+      // General greeting/feedback
+      if (/hi|hello|hey|thanks|cool|yes|ok|sounds good|perfect|great|awesome|nice|love|excellent/i.test(lower)) {
+        return { 
+          intent: "acknowledge", 
+          confidence: 0.7, 
+          extracted: { } 
+        };
+      }
+      
+      return { 
+        intent: "unknown", 
+        confidence: 0.3, 
+        extracted: { } 
+      };
+    }
+
+    function generateAIResponse(intent, extracted) {
+      let response = "";
+      let speakResponse = "";
+      
+      switch(intent) {
+        case "dimensions":
+          widthInput.value = Math.max(5, extracted.width);
+          heightInput.value = Math.max(3, extracted.height);
+          renderStageReview();
+          response = "✅ Perfect! I've set your stage to " + extracted.width + " ft wide × " + extracted.height + " ft high. I can already see this taking shape! 📏\n\nNow let's pick your LED design. What style appeals to you? Try: geometric, pixel, wave, neon, hologram, spectrum, or stage3d";
+          assistantState.stage = "led";
+          break;
+          
+        case "led_choice":
+          applyOption(".led-pattern", "led", extracted.ledStyle);
+          const ledName = extracted.ledStyle.replace("3d", "3D").replace(extracted.ledStyle[0], extracted.ledStyle[0].toUpperCase());
+          response = "🎨 Awesome! I've applied the " + ledName + " LED style. It looks stunning! 💡\n\nNext up: sound system! Which would work best? Options: stereo (2), quad (4), surround (6), or line array (8)";
+          assistantState.stage = "sound";
+          break;
+          
+        case "sound_choice":
+          applyOption(".sound-option", "sound", extracted.soundSystem);
+          const soundName = extracted.soundSystem.replace("_", " ").split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+          response = "🔊 Excellent! I've set up " + soundName + " sound system. The acoustics will be perfect! 🎵\n\nFinal step: Do you want full equipment (LED + DJ), just LED, or just DJ setup?";
+          assistantState.stage = "equipment";
+          break;
+          
+        case "equipment_choice":
+          const equipmentType = extracted.equipment === "both" ? "both LED and DJ" : (extracted.equipment === "led_only" ? "LED only" : "DJ only");
+          response = "⚙️ Perfect! I'm setting up " + equipmentType + " equipment. 🎯\n\nNow type 'generate' or 'show me' and I'll create your complete stage design visualization!";
+          assistantState.stage = "review";
+          break;
+          
+        case "event_type":
+          assistantState.eventType = extracted.eventType;
+          response = "🎭 Great choice! A " + extracted.eventType.toUpperCase() + " needs the perfect setup. 🌟\n\nFirst, what stage dimensions do you need? Give me width and height. Example: 'width 40 and height 20' or just '40 by 20'";
+          assistantState.stage = "dimensions";
+          break;
+          
+        case "generate":
+          generateImage({ appendToGallery: true });
+          response = "🎬 Generating your stage design now... Watch the magic happen! This will show exactly how everything looks together on stage. ✨\n\nOnce ready, you can submit your service request!";
+          assistantState.stage = "review";
+          break;
+          
+        case "submit":
+          submitServiceBtn.click();
+          response = "🚀 Submitting your service request now! The admin team will review your design and get back to you soon with approval or feedback.\n\nThank you for using Event Service AI! 🎉";
+          assistantState.stage = "complete";
+          break;
+          
+        case "help":
+          response = "📋 Here's what I can do:\n\n" +
+            "🏗️ Set stage size: 'width 40, height 20'\n" +
+            "🎨 Choose LED: 'geometric', 'pixel', 'wave', 'neon', 'hologram', 'spectrum', 'stage3d'\n" +
+            "🔊 Set sound: 'stereo', 'quad', 'surround', 'line array'\n" +
+            "⚙️ Equipment: 'both', 'led only', 'dj only'\n" +
+            "🎬 Generate design: 'generate' or 'show me the layout'\n" +
+            "📤 Submit: 'submit' or 'submit request'\n\nJust ask and I'll configure it!";
+          break;
+          
+        case "acknowledge":
+          const nextPrompts = [
+            "Perfect! What should we adjust or set up next? 😊",
+            "Awesome! Ready to continue? What's next?",
+            "Great! Shall we move forward? What else?",
+            "Love the energy! Ready for the next step? 🚀"
+          ];
+          response = nextPrompts[Math.floor(Math.random() * nextPrompts.length)];
+          break;
+          
+        case "unknown":
+          if (assistantState.stage === "greeting" || assistantState.stage === "eventType") {
+            response = "I'd love to help! Tell me what event you're planning. Examples: college fest, wedding, concert, corporate event, product launch. 🎪";
+          } else if (assistantState.stage === "dimensions") {
+            response = "Got it! I need stage dimensions to visualize the design. Try: 'width 40 and height 20' or '40 x 20' 📐";
+          } else if (assistantState.stage === "led") {
+            response = "For LED style, pick one: geometric, pixel, wave, neon, hologram, spectrum, or stage3d. What sounds best? 💡";
+          } else if (assistantState.stage === "sound") {
+            response = "For sound, which system? stereo (2), quad (4), surround (6), or line array (8) speakers? 🔊";
+          } else if (assistantState.stage === "equipment") {
+            response = "Do you want 'both' (LED + DJ), 'led only', or 'dj only'? ⚙️";
+          } else if (assistantState.stage === "review") {
+            response = "Type 'generate' to see the design, or 'submit' when you're ready! 🎬";
+          } else {
+            response = "I'm here to help! Tell me what you'd like to adjust. Need help? Type 'help' 😊";
+          }
+          break;
+      }
+      
+      return localizeAssistantResponse(intent, extracted, response);
+    }
+
+    function handleChatMessage() {
+      const value = (eventChatInput.value || "").trim();
+      if (!value) return;
+      
+      addChatLine("user", value);
+      assistantState.conversationCount++;
+
+      // Detect user's intent
+      const { intent, confidence, extracted } = detectIntent(value);
+      
+      // Generate contextual response
+      let botResponse = generateAIResponse(intent, extracted);
+      
+      // Add response to chat
+      addChatLine("bot", botResponse);
+      
+      // Speak the response
+      speakText(botResponse);
+
+      eventChatInput.value = "";
+    }
+
+    // Initialize assistant greeting
+    function initializeAssistant() {
+      refreshAssistantChrome();
+      const greeting = assistantPhrase('greeting');
+      addChatLine("bot", greeting);
+      speakText(greeting);
+      assistantState.stage = "eventType";
+      // Prompt the user to speak and start listening for a voice input
+      setTimeout(() => {
+        const status = document.getElementById('speechStatus');
+        if (status) status.textContent = getSelectedLanguageCode() === 'te' ? 'మీరు ఇప్పుడు మాట్లాడవచ్చు — నేను వింటున్నాను.' : 'You can speak now — I am listening for your event details.';
+        startListening();
+      }, 700);
+    }
+
+    // Auto-initialize when modal opens - Initialize intelligent assistant conversation
+    eventGuideFab.addEventListener("click", function() {
+      eventGuideModal.classList.add("active");
+      if (eventChatMessages.children.length === 0) {
+        setTimeout(initializeAssistant, 300);
+      }
+    });
+
+    document.getElementById("generateBtn").addEventListener("click", function() {
+      generateImage({ appendToGallery: true, openFreshPage: true });
+    });
+
+    if (livePreviewViewBtn) {
+      livePreviewViewBtn.addEventListener("click", openLatestGeneratedPreview);
+    }
+
+    if (submitServiceBtn) {
+      submitServiceBtn.addEventListener("click", submitServiceRequest);
+    }
+
+    eventGuideClose.addEventListener("click", function() {
+      eventGuideModal.classList.remove("active");
+    });
+
+    eventGuideModal.addEventListener("click", function(event) {
+      if (event.target === eventGuideModal) {
+        eventGuideModal.classList.remove("active");
+      }
+    });
+
+    eventChatSend.addEventListener("click", handleChatMessage);
+    eventChatInput.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleChatMessage();
+      }
+    });
+
+    // --- Web Speech API: recognition (voice input) integration ---
+    let recognition = null;
+    let recognizing = false;
+
+    function initRecognition() {
+      if (recognition) return;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        const status = document.getElementById('speechStatus');
+        if (status) status.textContent = 'Voice not supported in this browser.';
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.lang = getSelectedSpeechLang();
+
+      recognition.onstart = () => {
+        recognizing = true;
+        const mic = document.getElementById('eventChatMic');
+        const status = document.getElementById('speechStatus');
+        if (mic) mic.textContent = assistantPhrase('speak');
+        if (status) status.textContent = assistantPhrase('listening');
+      };
+
+      recognition.onerror = (e) => {
+        const status = document.getElementById('speechStatus');
+        if (status) status.textContent = 'Voice recognition error: ' + (e.error || e.message || 'unknown');
+      };
+
+      recognition.onend = () => {
+        recognizing = false;
+        const mic = document.getElementById('eventChatMic');
+        const status = document.getElementById('speechStatus');
+        if (mic) mic.textContent = assistantPhrase('speak');
+        if (status) status.textContent = assistantPhrase('tapSpeak');
+      };
+
+      recognition.onresult = (event) => {
+        // Combine interim + final
+        let interim = '';
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const res = event.results[i];
+          if (res.isFinal) finalTranscript += res[0].transcript;
+          else interim += res[0].transcript;
+        }
+
+        // Show interim transcript in input while listening
+        const input = document.getElementById('eventChatInput');
+        if (input) input.value = (finalTranscript + ' ' + interim).trim();
+
+        // When we have a final result, submit it automatically
+        if (finalTranscript.trim().length > 0) {
+          // Save to transcript history
+          pushTranscriptToHistory(finalTranscript, getSelectedLanguageCode());
+          setTimeout(() => { handleChatMessage(); }, 250);
+        }
+      };
+    }
+
+    function startListening() {
+      initRecognition();
+      if (!recognition) return;
+      if (recognizing) return;
+      try {
+        recognition.start();
+      } catch (e) {
+        console.warn('Recognition start error', e);
+      }
+    }
+
+    function stopListening() {
+      if (!recognition) return;
+      try {
+        recognition.stop();
+      } catch (e) {
+        console.warn('Recognition stop error', e);
+      }
+    }
+
+    // Mic button toggle
+    const micBtn = document.getElementById('eventChatMic');
+    if (micBtn) {
+      micBtn.addEventListener('click', function() {
+        if (!recognition) initRecognition();
+        if (!recognition) return;
+        if (recognizing) {
+          stopListening();
+        } else {
+          startListening();
+        }
+      });
+    }
+
+    // Transcript history utilities
+    function loadTranscriptHistory() {
+      try {
+        const raw = sessionStorage.getItem('assistantTranscriptHistory');
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+
+    function saveTranscriptHistory(arr) {
+      sessionStorage.setItem('assistantTranscriptHistory', JSON.stringify(arr));
+    }
+
+    function pushTranscriptToHistory(text, lang) {
+      if (!text) return;
+      const arr = loadTranscriptHistory();
+      arr.unshift({ text: text.trim(), lang: lang || getSelectedSpeechLang(), ts: Date.now() });
+      // limit history
+      while (arr.length > 100) arr.pop();
+      saveTranscriptHistory(arr);
+      renderTranscriptHistory();
+    }
+
+    function renderTranscriptHistory() {
+      const container = document.getElementById('transcriptHistory');
+      if (!container) return;
+      const arr = loadTranscriptHistory();
+      container.innerHTML = arr.map(item => {
+        const d = new Date(item.ts);
+        const time = d.toLocaleTimeString();
+        return `<div style="margin-bottom:6px;">` +
+          `<div style="opacity:0.9; font-size:0.92rem;">${escapeHtml(item.text)}</div>` +
+          `<div style="opacity:0.6; font-size:0.75rem;">${item.lang} • ${time}</div>` +
+        `</div>`;
+      }).join('');
+    }
+
+    function escapeHtml(s) { return String(s || '').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+
+    const clearBtn = document.getElementById('clearTranscript');
+    if (clearBtn) clearBtn.addEventListener('click', function(){ sessionStorage.removeItem('assistantTranscriptHistory'); renderTranscriptHistory(); });
+
+    // Initial render of transcript history
+    renderTranscriptHistory();
+
+    // If the user changes language in another tab/page, update recognition and status
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'selectedLanguage') {
+        const status = document.getElementById('speechStatus');
+        if (status) status.textContent = 'Language changed — will use: ' + (localStorage.getItem('selectedLanguage') || 'en');
+        if (recognition) {
+          try { recognition.lang = getSelectedSpeechLang(); } catch (err) { console.warn('Could not update recognition.lang', err); }
+        }
+      }
+    });
+
+    // --- Wake-word (background) recognition ---
+    let wakeRecognition = null;
+    let wakeListening = false;
+
+    function initWakeRecognition() {
+      if (wakeRecognition) return;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return;
+      wakeRecognition = new SpeechRecognition();
+      wakeRecognition.continuous = true;
+      wakeRecognition.interimResults = true;
+      wakeRecognition.lang = getSelectedSpeechLang();
+
+      wakeRecognition.onresult = (ev) => {
+        let text = '';
+        for (let i = ev.resultIndex; i < ev.results.length; ++i) {
+          text += ev.results[i][0].transcript + ' ';
+        }
+        const langKey = getSelectedLanguageCode();
+        const hotwordRegex = wakeHotwordMap[langKey] || wakeHotwordMap['en'];
+        if (hotwordRegex && hotwordRegex.test(text)) {
+          // activate UI and begin focused recognition
+          const status = document.getElementById('speechStatus');
+          if (status) status.textContent = 'Wake word heard — opening assistant...';
+          // show assistant modal and focus
+          eventGuideModal.classList.add('active');
+          setTimeout(() => {
+            startListening();
+            speakText('Yes?');
+          }, 250);
+        }
+      };
+
+      wakeRecognition.onerror = (e) => { console.warn('Wake recognition error', e); };
+      wakeRecognition.onend = () => { if (wakeListening) { try { wakeRecognition.start(); } catch(e){} } };
+    }
+
+    function startWakeListening() {
+      initWakeRecognition();
+      if (!wakeRecognition) return;
+      if (wakeListening) return;
+      wakeListening = true;
+      try { wakeRecognition.start(); } catch(e) { console.warn('Wake start failed', e); }
+    }
+
+    function stopWakeListening() {
+      if (!wakeRecognition) return;
+      wakeListening = false;
+      try { wakeRecognition.stop(); } catch(e) { console.warn('Wake stop failed', e); }
+    }
+
+    // Wake toggle button
+    const wakeToggle = document.getElementById('wakeToggle');
+    function updateWakeToggleUI() {
+      const enabled = localStorage.getItem('wakeEnabled') === 'true';
+      if (wakeToggle) wakeToggle.textContent = enabled ? 'Wake: On' : 'Wake: Off';
+      if (enabled) startWakeListening(); else stopWakeListening();
+    }
+    if (wakeToggle) {
+      wakeToggle.addEventListener('click', function(){
+        const cur = localStorage.getItem('wakeEnabled') === 'true';
+        localStorage.setItem('wakeEnabled', (!cur).toString());
+        updateWakeToggleUI();
+        refreshAssistantChrome();
+      });
+    }
+    // apply saved preference on load
+    if (!localStorage.getItem('wakeEnabled')) localStorage.setItem('wakeEnabled','false');
+    updateWakeToggleUI();
+    refreshAssistantChrome();
+
+    update3DControlsVisibility();
+    sync3DControlsUI();
+    renderStageReview();
+    syncFullOutputPayload("");
+    renderMyEventsStatus();
+    setInterval(renderMyEventsStatus, 5000);
+  </script>
+</body>
+</html>

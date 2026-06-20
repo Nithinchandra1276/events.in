@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Full Output Preview | Event AI</title>
+  <meta name="description" content="Full page output preview for generated event stage layouts." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1622;
+      --surface: #102032;
+      --surface-2: #12273a;
+      --text: #ecf4fb;
+      --muted: #9fb3c7;
+      --accent: #2cb8e2;
+      --line: #2f4357;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% 18%, rgba(44, 184, 226, 0.18), transparent 35%),
+        radial-gradient(circle at 86% 0%, rgba(39, 142, 194, 0.16), transparent 42%),
+        var(--bg);
+      color: var(--text);
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(11, 24, 36, 0.9);
+      backdrop-filter: blur(8px);
+    }
+
+    .title-wrap h1 {
+      font-family: "Sora", "Segoe UI", sans-serif;
+      font-size: 1.18rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .title-wrap p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      border-radius: 999px;
+      background: rgba(31, 68, 94, 0.8);
+      border: 1px solid rgba(96, 145, 177, 0.55);
+      color: #d9f3ff;
+      padding: 4px 11px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .viewer-shell {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: 1fr;
+    }
+
+    .viewer {
+      background: linear-gradient(160deg, var(--surface), var(--surface-2));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      width: 100%;
+      min-height: calc(100vh - 130px);
+      height: auto;
+      overflow: auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 14px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    .viewer img {
+      width: min(100%, 1700px);
+      height: auto;
+      max-width: none;
+      max-height: none;
+      object-fit: contain;
+      border-radius: 10px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+      display: block;
+      margin: 0 auto;
+    }
+
+    .svg-host {
+      width: min(100%, 1300px);
+      aspect-ratio: 1000 / 560;
+    }
+
+    .svg-host svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 10px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+    }
+
+    .live3d-wrap {
+      width: min(100%, 1300px);
+      display: grid;
+      gap: 10px;
+    }
+
+    .live3d-box {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(159, 179, 199, 0.35);
+      background: #0b1622;
+      position: relative;
+    }
+
+    .live3d-box svg {
+      width: 100%;
+      aspect-ratio: 1000 / 560;
+      display: block;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .live3d-box svg.dragging {
+      cursor: grabbing;
+    }
+
+    .live3d-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 3;
+      font-size: 11px;
+      font-weight: 800;
+      border-radius: 999px;
+      padding: 5px 10px;
+      color: #dcf3ff;
+      background: rgba(8, 28, 44, 0.75);
+      border: 1px solid rgba(96, 145, 177, 0.55);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .live3d-controls {
+      border-radius: 10px;
+      border: 1px solid rgba(96, 145, 177, 0.45);
+      background: rgba(11, 24, 36, 0.82);
+      padding: 10px;
+      display: grid;
+      gap: 9px;
+    }
+
+    .live3d-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .live3d-row label {
+      min-width: 86px;
+      color: #c5dfef;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .live3d-btn {
+      border: 1px solid rgba(96, 145, 177, 0.45);
+      background: linear-gradient(135deg, #2cb8e2, #278ec2);
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .live3d-btn.secondary {
+      background: linear-gradient(135deg, #2a3f52, #1e3245);
+    }
+
+    .live3d-range {
+      flex: 1;
+      min-width: 130px;
+      accent-color: #2cb8e2;
+      cursor: pointer;
+    }
+
+    .live3d-meta {
+      color: #c5dfef;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.5;
+      max-width: 540px;
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        padding: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .meta {
+        justify-content: flex-start;
+      }
+
+      .viewer-shell {
+        padding: 10px;
+      }
+
+      .viewer {
+        padding: 10px;
+        min-height: calc(100vh - 160px);
+      }
+
+      .viewer img {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="title-wrap">
+      <h1>Event Service Full Output</h1>
+      <p id="subtitle">Generated stage output preview in full page mode.</p>
+    </div>
+    <div id="meta" class="meta"></div>
+  </header>
+
+  <main class="viewer-shell">
+    <section id="viewer" class="viewer" aria-live="polite"></section>
+  </main>
+
+  <script>
+    function readPayload() {
+      try {
+        const sessionData = sessionStorage.getItem("eventFullOutputPreview");
+        const localData = localStorage.getItem("eventFullOutputPreview");
+
+        const parseSafe = function(raw) {
+          if (!raw) return {};
+          try {
+            return JSON.parse(raw);
+          } catch (error) {
+            return {};
+          }
+        };
+
+        const sessionPayload = parseSafe(sessionData);
+        const localPayload = parseSafe(localData);
+
+        const sessionTime = Date.parse(sessionPayload.createdAt || "") || 0;
+        const localTime = Date.parse(localPayload.createdAt || "") || 0;
+
+        // Always use the latest payload to avoid stale tab/session data mismatches.
+        if (localTime > sessionTime) return localPayload;
+        if (sessionTime > 0) return sessionPayload;
+        if (localTime > 0) return localPayload;
+        return Object.keys(localPayload).length ? localPayload : sessionPayload;
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function createChip(text) {
+      const node = document.createElement("span");
+      node.className = "chip";
+      node.textContent = text;
+      return node;
+    }
+
+    function setMeta(payload) {
+      const meta = document.getElementById("meta");
+      meta.innerHTML = "";
+      const chips = [
+        payload.eventName ? "Event: " + payload.eventName : "Event: Untitled",
+        (payload.stageWidthFt || 20) + "ft x " + (payload.stageHeightFt || 10) + "ft",
+        payload.ledPattern === "stage3d" ? "LED: 3D LIVE" : (payload.ledPattern ? "LED: " + payload.ledPattern : "LED: default"),
+        payload.soundSystem ? "Sound: " + payload.soundSystem.replace("_", " ") : "Sound: stereo",
+        payload.setupMode ? "Mode: " + payload.setupMode.replace("_", " ") : "Mode: both"
+      ];
+      chips.forEach(function(chipText) {
+        meta.appendChild(createChip(chipText));
+      });
+
+      const subtitle = document.getElementById("subtitle");
+      if (payload.eventType || payload.eventLocation || payload.eventDate) {
+        const line = [payload.eventType, payload.eventLocation, payload.eventDate].filter(Boolean).join(" | ");
+        subtitle.textContent = line || "Generated stage output preview in full page mode.";
+      } else if (payload.ledPattern === "stage3d") {
+        subtitle.textContent = "3D stage preview loaded from your latest selection.";
+      }
+    }
+
+    function renderPayload(payload) {
+      const viewer = document.getElementById("viewer");
+      viewer.innerHTML = "";
+
+      if (payload.ledPattern === "stage3d") {
+        renderLive3D(viewer, payload);
+        return;
+      }
+
+      function renderSvgFallback() {
+        if (payload.reviewSvg) {
+          const host = document.createElement("div");
+          host.className = "svg-host";
+          host.innerHTML = payload.reviewSvg;
+          viewer.appendChild(host);
+          return true;
+        }
+        return false;
+      }
+
+      if (payload.generatedImage) {
+        const image = document.createElement("img");
+        image.src = payload.generatedImage;
+        image.alt = "Generated service stage output";
+        image.onerror = function() {
+          viewer.innerHTML = "";
+          if (!renderSvgFallback()) {
+            const empty = document.createElement("div");
+            empty.className = "empty";
+            empty.textContent = "Preview image failed to load. Generate again to refresh output.";
+            viewer.appendChild(empty);
+          }
+        };
+        viewer.appendChild(image);
+        return;
+      }
+
+      // If no generated image exists, fallback to live SVG preview.
+      if (payload.ledPattern === "stage3d" && renderSvgFallback()) {
+        return;
+      }
+
+      if (renderSvgFallback()) {
+        return;
+      }
+
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "No output is available yet. Generate a 3D/service preview first, then reopen this page.";
+      viewer.appendChild(empty);
+    }
+
+    function createSvgNode(name, attrs) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+      Object.entries(attrs || {}).forEach(function(entry) {
+        node.setAttribute(entry[0], entry[1]);
+      });
+      return node;
+    }
+
+    function project3DPoint(point, angleY, angleX, cameraDistance, centerX, centerY) {
+      const cosY = Math.cos(angleY);
+      const sinY = Math.sin(angleY);
+      const xzX = point.x * cosY - point.z * sinY;
+      const xzZ = point.x * sinY + point.z * cosY;
+
+      const cosX = Math.cos(angleX);
+      const sinX = Math.sin(angleX);
+      const yzY = point.y * cosX - xzZ * sinX;
+      const yzZ = point.y * sinX + xzZ * cosX;
+
+      const perspective = cameraDistance / Math.max(80, cameraDistance + yzZ);
+      return {
+        x: centerX + xzX * perspective,
+        y: centerY + yzY * perspective,
+        z: yzZ
+      };
+    }
+
+    function createCuboid(center, size, colors, strokeColor) {
+      const hx = size.w / 2;
+      const hy = size.h / 2;
+      const hz = size.d / 2;
+      const vertices = [
+        { x: center.x - hx, y: center.y - hy, z: center.z - hz },
+        { x: center.x + hx, y: center.y - hy, z: center.z - hz },
+        { x: center.x + hx, y: center.y + hy, z: center.z - hz },
+        { x: center.x - hx, y: center.y + hy, z: center.z - hz },
+        { x: center.x - hx, y: center.y - hy, z: center.z + hz },
+        { x: center.x + hx, y: center.y - hy, z: center.z + hz },
+        { x: center.x + hx, y: center.y + hy, z: center.z + hz },
+        { x: center.x - hx, y: center.y + hy, z: center.z + hz }
+      ];
+
+      const faces = [
+        { idx: [0, 1, 2, 3], fill: colors.back || colors.front, stroke: false },
+        { idx: [4, 5, 6, 7], fill: colors.front, stroke: true },
+        { idx: [0, 1, 5, 4], fill: colors.top, stroke: false },
+        { idx: [3, 2, 6, 7], fill: colors.bottom || colors.front, stroke: false },
+        { idx: [1, 2, 6, 5], fill: colors.side, stroke: false },
+        { idx: [0, 3, 7, 4], fill: colors.side, stroke: false }
+      ];
+
+      return { vertices: vertices, faces: faces, strokeColor: strokeColor || "#e2e8f0" };
+    }
+
+    function drawSimple3DScene(svg, config) {
+      const speakerCounts = { stereo: 2, quad: 4, surround: 6, line_array: 8 };
+      const angleY = config.rotationDeg * (Math.PI / 180);
+      const angleX = config.tiltDeg * (Math.PI / 180);
+      const centerX = 500;
+      const centerY = 350;
+      const cameraDistance = 980 / Math.max(0.65, config.zoom);
+
+      const widthFt = Math.max(5, Number(config.widthFt) || 20);
+      const heightFt = Math.max(3, Number(config.heightFt) || 10);
+      const stageWidth = Math.max(320, widthFt * 19);
+      const stageHeight = Math.max(52, heightFt * 5.6);
+      const stageDepth = Math.max(170, widthFt * 7.4);
+      const ledWidth = stageWidth * 0.86;
+      const ledHeight = Math.max(170, heightFt * 17.5);
+      const ledDepth = Math.max(22, stageDepth * 0.12);
+
+      const objects = [];
+      objects.push(createCuboid(
+        { x: 0, y: 90, z: 0 },
+        { w: stageWidth, h: stageHeight, d: stageDepth },
+        { front: "#0b1220", top: "#161f30", side: "#060b14", bottom: "#04070d", back: "#04070d" },
+        "#334155"
+      ));
+
+      const legOffsetX = stageWidth * 0.42;
+      const legOffsetZ = stageDepth * 0.38;
+      const legHeight = 120;
+      [-1, 1].forEach(function(lx) {
+        [-1, 1].forEach(function(lz) {
+          objects.push(createCuboid(
+            { x: lx * legOffsetX, y: 90 + (stageHeight / 2) + (legHeight / 2), z: lz * legOffsetZ },
+            { w: 14, h: legHeight, d: 14 },
+            { front: "#94a3b8", top: "#cbd5e1", side: "#64748b", bottom: "#475569", back: "#64748b" },
+            "#e2e8f0"
+          ));
+        });
+      });
+
+      if (config.equipment !== "sound_only") {
+        const ledCenterY = 90 - (stageHeight / 2) - (ledHeight / 2) - 4;
+        const ledCenterZ = (stageDepth * 0.5) + (ledDepth * 0.2);
+        objects.push(createCuboid(
+          { x: 0, y: ledCenterY, z: ledCenterZ },
+          { w: ledWidth + 40, h: ledHeight + 40, d: ledDepth + 10 },
+          { front: "#0f172a", top: "#334155", side: "#020617", bottom: "#020617", back: "#0b1220" },
+          "#94a3b8"
+        ));
+        objects.push(createCuboid(
+          { x: 0, y: ledCenterY, z: ledCenterZ + 8 },
+          { w: ledWidth, h: ledHeight, d: ledDepth },
+          { front: "#7dd3fc", top: "#bae6fd", side: "#22d3ee", bottom: "#0891b2", back: "#0e7490" },
+          "#e2e8f0"
+        ));
+      }
+
+      if (config.equipment !== "led_only") {
+        const count = speakerCounts[config.soundSystem] || 2;
+        const perSide = Math.max(1, Math.ceil(count / 2));
+        const arrayX = stageWidth * 0.47;
+        const arrayTopY = 90 - (stageHeight / 2) - (ledHeight * 0.6);
+        const arrayBaseZ = -(stageDepth * 0.82);
+
+        [-1, 1].forEach(function(side) {
+          for (let i = 0; i < perSide; i += 1) {
+            objects.push(createCuboid(
+              {
+                x: (side * arrayX) + (side * i * 1.2),
+                y: arrayTopY + (i * 31),
+                z: arrayBaseZ - (i * 5)
+              },
+              { w: 24, h: 36, d: 24 },
+              { front: "#0a0f18", top: "#1a2332", side: "#05080f", bottom: "#03060b", back: "#090d15" },
+              "#64748b"
+            ));
+          }
+        });
+      }
+
+      const drawFaces = [];
+      objects.forEach(function(obj) {
+        const projected = obj.vertices.map(function(vertex) {
+          return project3DPoint(vertex, angleY, angleX, cameraDistance, centerX, centerY);
+        });
+
+        obj.faces.forEach(function(face) {
+          const points = face.idx.map(function(index) { return projected[index]; });
+          const depth = points.reduce(function(sum, p) { return sum + p.z; }, 0) / points.length;
+          drawFaces.push({
+            points: points,
+            fill: face.fill,
+            stroke: face.stroke ? obj.strokeColor : "none",
+            depth: depth
+          });
+        });
+      });
+
+      drawFaces.sort(function(a, b) { return a.depth - b.depth; });
+      drawFaces.forEach(function(face) {
+        const poly = createSvgNode("polygon", {
+          points: face.points.map(function(p) { return p.x + "," + p.y; }).join(" "),
+          fill: face.fill,
+          stroke: face.stroke,
+          "stroke-width": face.stroke === "none" ? "0" : "1.7"
+        });
+        svg.appendChild(poly);
+      });
+
+      const groundShadow = createSvgNode("ellipse", {
+        cx: "500",
+        cy: "458",
+        rx: String(Math.max(170, stageWidth * 0.36)),
+        ry: "26",
+        fill: "rgba(2, 6, 23, 0.45)"
+      });
+      svg.appendChild(groundShadow);
+    }
+
+    function renderLive3D(viewer, payload) {
+      const root = document.createElement("div");
+      root.className = "live3d-wrap";
+
+      const box = document.createElement("div");
+      box.className = "live3d-box";
+
+      const badge = document.createElement("div");
+      badge.className = "live3d-badge";
+      badge.textContent = "3D Live Preview (360 Orbit)";
+
+      const svg = createSvgNode("svg", {
+        id: "fullPreview3dSvg",
+        viewBox: "0 0 1000 560",
+        role: "img",
+        "aria-label": "3D stage live preview"
+      });
+
+      box.appendChild(badge);
+      box.appendChild(svg);
+      root.appendChild(box);
+
+      const controls = document.createElement("div");
+      controls.className = "live3d-controls";
+      controls.innerHTML = `
+        <div class="live3d-row">
+          <button id="fullPreviewRotateToggle" class="live3d-btn" type="button">Pause Orbit</button>
+          <button id="fullPreviewReset" class="live3d-btn secondary" type="button">Reset View</button>
+          <span class="live3d-meta">Drag stage to rotate 360 degrees</span>
+        </div>
+        <div class="live3d-row">
+          <label for="fullPreviewZoom">Zoom</label>
+          <input id="fullPreviewZoom" class="live3d-range" type="range" min="0.7" max="1.8" step="0.05" value="1" />
+          <span id="fullPreviewZoomValue" class="live3d-meta">100%</span>
+        </div>
+        <div class="live3d-row">
+          <label for="fullPreviewSpeed">Orbit Speed</label>
+          <input id="fullPreviewSpeed" class="live3d-range" type="range" min="0.1" max="2.4" step="0.1" value="0.9" />
+          <span id="fullPreviewSpeedValue" class="live3d-meta">Medium</span>
+        </div>
+      `;
+      root.appendChild(controls);
+      viewer.appendChild(root);
+
+      const state = {
+        widthFt: Math.max(5, Number(payload.stageWidthFt) || 20),
+        heightFt: Math.max(3, Number(payload.stageHeightFt) || 10),
+        soundSystem: payload.soundSystem || "stereo",
+        equipment: payload.setupMode || "both",
+        rotationDeg: 24,
+        tiltDeg: -18,
+        zoom: 1,
+        speedDeg: 0.9,
+        autoRotate: true,
+        dragging: false,
+        dragStartX: 0,
+        dragStartY: 0,
+        dragRotation: 24,
+        dragTilt: -18,
+        animationId: null
+      };
+
+      const zoomInput = document.getElementById("fullPreviewZoom");
+      const speedInput = document.getElementById("fullPreviewSpeed");
+      const zoomValue = document.getElementById("fullPreviewZoomValue");
+      const speedValue = document.getElementById("fullPreviewSpeedValue");
+      const rotateToggle = document.getElementById("fullPreviewRotateToggle");
+      const resetBtn = document.getElementById("fullPreviewReset");
+
+      function speedLabel(speed) {
+        if (speed <= 0.6) return "Slow";
+        if (speed <= 1.4) return "Medium";
+        return "Fast";
+      }
+
+      function syncUi() {
+        zoomInput.value = String(state.zoom);
+        speedInput.value = String(state.speedDeg);
+        zoomValue.textContent = Math.round(state.zoom * 100) + "%";
+        speedValue.textContent = speedLabel(state.speedDeg);
+        rotateToggle.textContent = state.autoRotate ? "Pause Orbit" : "Resume Orbit";
+      }
+
+      function render() {
+        svg.innerHTML = "";
+        svg.appendChild(createSvgNode("rect", { x: "0", y: "0", width: "1000", height: "560", fill: "#0f172a" }));
+        svg.appendChild(createSvgNode("rect", { x: "0", y: "500", width: "1000", height: "60", fill: "#111827" }));
+        drawSimple3DScene(svg, state);
+      }
+
+      function stopAnim() {
+        if (!state.animationId) return;
+        cancelAnimationFrame(state.animationId);
+        state.animationId = null;
+      }
+
+      function startAnim() {
+        if (state.animationId) return;
+        const tick = function() {
+          if (state.autoRotate && !state.dragging) {
+            state.rotationDeg = (state.rotationDeg + state.speedDeg) % 360;
+          }
+          render();
+          state.animationId = requestAnimationFrame(tick);
+        };
+        state.animationId = requestAnimationFrame(tick);
+      }
+
+      function beginDrag(x, y) {
+        state.dragging = true;
+        state.dragStartX = x;
+        state.dragStartY = y;
+        state.dragRotation = state.rotationDeg;
+        state.dragTilt = state.tiltDeg;
+        svg.classList.add("dragging");
+      }
+
+      function moveDrag(x, y) {
+        if (!state.dragging) return;
+        state.rotationDeg = (state.dragRotation + ((x - state.dragStartX) * 0.42)) % 360;
+        state.tiltDeg = Math.max(-80, Math.min(80, state.dragTilt + ((y - state.dragStartY) * 0.2)));
+        render();
+      }
+
+      function endDrag() {
+        if (!state.dragging) return;
+        state.dragging = false;
+        svg.classList.remove("dragging");
+      }
+
+      rotateToggle.addEventListener("click", function() {
+        state.autoRotate = !state.autoRotate;
+        syncUi();
+      });
+
+      resetBtn.addEventListener("click", function() {
+        state.rotationDeg = 24;
+        state.tiltDeg = -18;
+        state.zoom = 1;
+        state.speedDeg = 0.9;
+        syncUi();
+        render();
+      });
+
+      zoomInput.addEventListener("input", function() {
+        state.zoom = Math.min(1.8, Math.max(0.7, Number(this.value) || 1));
+        syncUi();
+        render();
+      });
+
+      speedInput.addEventListener("input", function() {
+        state.speedDeg = Math.min(2.4, Math.max(0.1, Number(this.value) || 0.9));
+        syncUi();
+      });
+
+      svg.addEventListener("mousedown", function(event) {
+        event.preventDefault();
+        beginDrag(event.clientX, event.clientY);
+      });
+      window.addEventListener("mousemove", function(event) {
+        moveDrag(event.clientX, event.clientY);
+      });
+      window.addEventListener("mouseup", endDrag);
+
+      svg.addEventListener("touchstart", function(event) {
+        if (!event.touches || !event.touches[0]) return;
+        beginDrag(event.touches[0].clientX, event.touches[0].clientY);
+      }, { passive: true });
+      svg.addEventListener("touchmove", function(event) {
+        if (!event.touches || !event.touches[0]) return;
+        moveDrag(event.touches[0].clientX, event.touches[0].clientY);
+      }, { passive: true });
+      window.addEventListener("touchend", endDrag);
+
+      syncUi();
+      render();
+      startAnim();
+    }
+
+    const payload = readPayload();
+    setMeta(payload);
+    renderPayload(payload);
+  </script>
+</body>
+</html>

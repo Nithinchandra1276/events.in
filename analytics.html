@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analytics Intelligence Dashboard</title>
+  <meta name="description" content="Real-time analytics intelligence dashboard for system metrics, health, and final review reporting." />
+  <link rel="stylesheet" href="professional-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #081926;
+      --panel: #ffffff;
+      --line: #d8eaf0;
+      --primary: #117f9d;
+      --accent: #ff944a;
+      --text: #162935;
+      --muted: #5f7782;
+      --ok: #168953;
+      --warn: #c37c00;
+      --danger: #be3a2f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Manrope", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(600px 320px at 0% 0%, rgba(255, 148, 74, 0.22), transparent 55%),
+        radial-gradient(850px 360px at 100% 0%, rgba(17, 127, 157, 0.22), transparent 50%),
+        linear-gradient(140deg, #072033, var(--bg));
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .wrap {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      backdrop-filter: blur(8px);
+    }
+
+    h1 {
+      font-family: "Space Grotesk", sans-serif;
+      color: #f6fdff;
+      font-size: clamp(22px, 2.9vw, 32px);
+    }
+
+    .top p {
+      color: #cde4ea;
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 13px;
+      background: #f0fbff;
+      color: #174457;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 35px rgba(7, 33, 45, 0.2);
+      overflow: hidden;
+    }
+
+    .panel h2 {
+      font-size: 18px;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .body {
+      padding: 14px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(110px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .stat {
+      border: 1px solid #daecf1;
+      border-radius: 12px;
+      padding: 10px;
+      background: #f6fcfe;
+    }
+
+    .stat .num {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 25px;
+      color: var(--primary);
+    }
+
+    .stat .txt {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    .bar-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar-item {
+      background: #f7fbfd;
+      border: 1px solid #dfedf2;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .bar-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #31515f;
+      margin-bottom: 6px;
+    }
+
+    .bar-track {
+      height: 9px;
+      background: #d9ebf2;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #ff944a, #ffbf47);
+      transition: width 0.25s ease;
+    }
+
+    .health-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .health {
+      border: 1px solid #ddeef2;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .ok { color: var(--ok); font-weight: 800; }
+    .warn { color: var(--warn); font-weight: 800; }
+    .danger { color: var(--danger); font-weight: 800; }
+
+    .downloads {
+      display: grid;
+      gap: 8px;
+    }
+
+    .download-card {
+      border: 1px solid #d6e7ee;
+      border-radius: 12px;
+      background: #f8fcfe;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .download-card a {
+      text-decoration: none;
+      background: linear-gradient(120deg, #117f9d, #0f6a82);
+      color: #fff;
+      border-radius: 9px;
+      padding: 7px 10px;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .line-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .snapshot-grid {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .snapshot {
+      border: 1px solid #ddeef2;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f7fbfd;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .insight-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .insight-item {
+      border: 1px solid #dfedf2;
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+      background: #fbfdfd;
+      padding: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #2c4752;
+    }
+
+    @media (max-width: 930px) {
+      .grid { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(2, minmax(110px, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <h1>Project Analytics Dashboard</h1>
+        <p id="analyticsSubtitle">Real-time project summary for final review and faculty presentation.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a class="btn" href="options.html">Back to Command Center</a>
+        <button id="refreshBtn" class="btn" type="button">Refresh Metrics</button>
+      </div>
+    </header>
+
+    <section class="grid">
+      <article class="panel">
+        <div class="head">
+          <h2>Usage Metrics</h2>
+          <span id="updatedLabel" class="ok">Updated now</span>
+        </div>
+        <div class="body">
+          <div class="cards">
+            <div class="stat"><div id="metricUsers" class="num">0</div><div class="txt">Users</div></div>
+            <div class="stat"><div id="metricApps" class="num">0</div><div class="txt">Applications</div></div>
+            <div class="stat"><div id="metricChecklist" class="num">0%</div><div class="txt">Checklist Completion</div></div>
+            <div class="stat"><div id="metricEvents" class="num">0</div><div class="txt">Event Records</div></div>
+          </div>
+
+          <div id="moduleBars" class="bar-grid"></div>
+        </div>
+      </article>
+
+      <aside style="display:grid;gap:16px;">
+        <section class="panel">
+          <div class="head"><h2>System Health</h2></div>
+          <div id="healthList" class="body health-list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="head"><h2>Executive Insights</h2></div>
+          <div class="body">
+            <div class="snapshot-grid">
+              <div class="snapshot"><span>Project</span><span id="snapshotProject">-</span></div>
+              <div class="snapshot"><span>Readiness Score</span><span id="snapshotReadiness">0%</span></div>
+              <div class="snapshot"><span>Budget Variance</span><span id="snapshotBudget">INR 0</span></div>
+              <div class="snapshot"><span>High Risks</span><span id="snapshotRisk">0</span></div>
+            </div>
+            <div id="insightList" class="insight-list"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="head"><h2>Review Assets</h2></div>
+          <div class="body downloads">
+            <div class="download-card">
+              <span>Full Project PPT (22 slides)</span>
+              <a href="/download/ppt">Download</a>
+            </div>
+            <div class="download-card">
+              <span>Minimal Project PPT</span>
+              <a href="/download/ppt-minimal">Download</a>
+            </div>
+            <div class="download-card">
+              <span>Verification Notes</span>
+              <a href="PROJECT_VERIFICATION.md" target="_blank" rel="noopener">Open</a>
+            </div>
+            <p class="line-note">Use these assets in your final review to present architecture, features, and project proof.</p>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script src="app-shared.js"></script>
+  <script>
+    function parseArray(key) {
+      return AppShared.readArray(key);
+    }
+
+    function checklistPercent() {
+      return AppShared.getChecklistPercent(6);
+    }
+
+    function buildModuleLoad(overview) {
+      return [
+        { name: "AI Event Designer", value: overview.eventCount ? Math.min(100, 60 + overview.eventCount * 10) : 42 },
+        { name: "Service Operations", value: overview.applicationsCount ? Math.min(100, 58 + overview.applicationsCount * 8) : 40 },
+        { name: "Admin Monitoring", value: overview.usersCount ? 84 : 54 },
+        { name: "Planning Workspace", value: Math.max(overview.taskHealth, 28) },
+        { name: "Analytics", value: Math.max(overview.readinessScore, 35) }
+      ];
+    }
+
+    function renderBars(overview) {
+      const moduleLoad = buildModuleLoad(overview);
+      const host = document.getElementById("moduleBars");
+      host.innerHTML = moduleLoad
+        .map((item) => (
+          "<div class='bar-item'>" +
+            "<div class='bar-row'><span>" + item.name + "</span><span>" + item.value + "%</span></div>" +
+            "<div class='bar-track'><div class='bar-fill' style='width:" + item.value + "%'></div></div>" +
+          "</div>"
+        ))
+        .join("");
+    }
+
+    function renderHealth(users, apps, eventRecords, activities, overview) {
+      const health = [
+        {
+          name: "Authentication Module",
+          status: users.length > 0 ? "Operational" : "Needs Demo Data",
+          className: users.length > 0 ? "ok" : "warn"
+        },
+        {
+          name: "Service Workflow",
+          status: apps.length > 0 ? "Operational" : "No Applications Yet",
+          className: apps.length > 0 ? "ok" : "warn"
+        },
+        {
+          name: "Event Pipeline",
+          status: eventRecords.length > 0 ? "Operational" : "No Event Records",
+          className: eventRecords.length > 0 ? "ok" : "warn"
+        },
+        {
+          name: "Admin Data Visibility",
+          status: "Operational",
+          className: "ok"
+        },
+        {
+          name: "Planner Discipline",
+          status: overview.openTasks === 0 && overview.tasksCount > 0 ? "Strong" : overview.tasksCount > 0 ? "Active" : "Needs Setup",
+          className: overview.openTasks === 0 && overview.tasksCount > 0 ? "ok" : overview.tasksCount > 0 ? "warn" : "danger"
+        },
+        {
+          name: "Activity Logging",
+          status: activities.length > 0 ? "Operational" : "Idle",
+          className: activities.length > 0 ? "ok" : "danger"
+        }
+      ];
+
+      document.getElementById("healthList").innerHTML = health
+        .map((item) => (
+          "<div class='health'><span>" + item.name + "</span><span class='" + item.className + "'>" + item.status + "</span></div>"
+        ))
+        .join("");
+    }
+
+    function renderInsights(profile, overview) {
+      document.getElementById("analyticsSubtitle").textContent =
+        "Live analytics for " + profile.projectName + ", aligned to your final review workflow.";
+      document.getElementById("snapshotProject").textContent = profile.projectName || "-";
+      document.getElementById("snapshotReadiness").textContent = overview.readinessScore + "%";
+      document.getElementById("snapshotBudget").textContent = AppShared.formatCurrency(overview.budgetVariance);
+      document.getElementById("snapshotRisk").textContent = overview.highRiskCount;
+
+      document.getElementById("insightList").innerHTML = AppShared.getReadinessActions(6)
+        .map((item) => "<div class='insight-item'>" + item + "</div>")
+        .join("");
+    }
+
+    function renderMetrics() {
+      const users = parseArray("users");
+      const apps = parseArray("serviceApplications");
+      const eventRecords = parseArray("eventApplications");
+      const activities = parseArray("projectActivity");
+      const checklist = checklistPercent();
+      const overview = AppShared.getOverview(6);
+      const profile = AppShared.getProjectProfile();
+
+      document.getElementById("metricUsers").textContent = users.length;
+      document.getElementById("metricApps").textContent = apps.length;
+      document.getElementById("metricChecklist").textContent = checklist + "%";
+      document.getElementById("metricEvents").textContent = eventRecords.length;
+      document.getElementById("updatedLabel").textContent = "Updated: " + new Date().toLocaleTimeString();
+
+      renderBars(overview);
+      renderHealth(users, apps, eventRecords, activities, overview);
+      renderInsights(profile, overview);
+
+      const selectedLanguage = localStorage.getItem("selectedLanguage") || "en";
+      if (selectedLanguage !== "en") {
+        AppShared.autoTranslatePage(selectedLanguage, { root: document.body, parallelLimit: 14 });
+      }
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", renderMetrics);
+
+    renderMetrics();
+  </script>
+</body>
+</html>

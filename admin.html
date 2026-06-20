@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration Console | Event-Service Platform</title>
+    <meta name="description" content="Administration console for user management, application monitoring, and operational oversight.">
+    <link rel="stylesheet" href="professional-theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #eef3f7;
+            --bg-strong: #dce6ef;
+            --surface: #ffffff;
+            --surface-muted: #f8fbfd;
+            --text: #112337;
+            --text-soft: #4a5f73;
+            --border: #d3dee8;
+            --border-strong: #b9c9d8;
+            --primary: #0f6f8e;
+            --primary-strong: #0b546f;
+            --danger: #b83131;
+            --danger-strong: #8e2323;
+            --shadow-card: 0 12px 30px rgba(16, 42, 64, 0.1);
+            --shadow-panel: 0 24px 50px rgba(16, 42, 64, 0.14);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Manrope', 'Segoe UI', sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 8% 15%, rgba(15, 111, 142, 0.12), transparent 36%),
+                radial-gradient(circle at 87% 12%, rgba(11, 84, 111, 0.09), transparent 42%),
+                linear-gradient(145deg, var(--bg) 0%, var(--bg-strong) 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+            background-size: 32px 32px;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .admin-container {
+            max-width: 1280px;
+            margin: 22px auto;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 251, 254, 0.95));
+            border: 1px solid rgba(179, 198, 213, 0.8);
+            border-radius: 24px;
+            box-shadow: var(--shadow-panel);
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+            animation: panelEntrance 0.45s ease-out;
+        }
+
+        @keyframes panelEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Sora', 'Segoe UI', sans-serif;
+            text-align: center;
+            color: #0f2a3f;
+            margin-bottom: 12px;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+
+        .admin-subtitle {
+            text-align: center;
+            color: var(--text-soft);
+            margin-bottom: 30px;
+            font-size: 0.98rem;
+        }
+
+        .admin-section {
+            margin-bottom: 34px;
+            padding: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow-card);
+            animation: sectionFade 0.5s ease-out both;
+        }
+
+        .admin-section:nth-child(2) { animation-delay: 0.03s; }
+        .admin-section:nth-child(3) { animation-delay: 0.06s; }
+        .admin-section:nth-child(4) { animation-delay: 0.09s; }
+
+        @keyframes sectionFade {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .admin-section h2 {
+            font-family: 'Sora', 'Segoe UI', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #10314b;
+            margin-bottom: 20px;
+            font-size: 1.45rem;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #dce6ef;
+        }
+
+        .admin-section h2::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, #1787a9, #0f6f8e);
+            box-shadow: 0 0 0 4px rgba(15, 111, 142, 0.15);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(150px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            border-radius: 14px;
+            padding: 18px 16px;
+            border: 1px solid #d4e0ea;
+            background: linear-gradient(145deg, #ffffff, #f4f9fc);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::after {
+            content: '';
+            position: absolute;
+            right: -30px;
+            bottom: -28px;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(15, 111, 142, 0.17), transparent 68%);
+        }
+
+        .summary-card .value {
+            position: relative;
+            z-index: 1;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f4560;
+        }
+
+        .summary-card .label {
+            position: relative;
+            z-index: 1;
+            margin-top: 5px;
+            font-size: 0.8rem;
+            color: var(--text-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 700;
+        }
+
+        .admin-toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .admin-search {
+            flex: 1 1 320px;
+            min-height: 44px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-strong);
+            background: var(--surface-muted);
+            font-size: 0.92rem;
+            color: var(--text);
+        }
+
+        .admin-search:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 111, 142, 0.18);
+            background: #ffffff;
+        }
+
+        .user-list {
+            list-style: none;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            background: #ffffff;
+            transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .user-item:hover {
+            transform: translateY(-2px);
+            border-color: #a9bfd2;
+            box-shadow: 0 10px 24px rgba(15, 42, 64, 0.09);
+        }
+
+        .user-info {
+            flex: 1;
+            color: #193146;
+            line-height: 1.5;
+        }
+
+        .password-mask {
+            display: inline-block;
+            margin-top: 5px;
+            color: #607487;
+            font-size: 0.84rem;
+            letter-spacing: 0.05em;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button,
+        .back-btn {
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        }
+
+        button {
+            min-height: 40px;
+            padding: 0 15px;
+            box-shadow: 0 5px 14px rgba(17, 42, 64, 0.12);
+        }
+
+        button:hover,
+        .back-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.03);
+        }
+
+        .edit-btn {
+            background: linear-gradient(180deg, #1787a9, #0f6f8e);
+            color: #f5fcff;
+        }
+
+        .edit-btn:hover {
+            box-shadow: 0 10px 22px rgba(15, 111, 142, 0.28);
+        }
+
+        .delete-btn {
+            background: linear-gradient(180deg, #c24646, #a32f2f);
+            color: #fff8f8;
+        }
+
+        .delete-btn:hover {
+            box-shadow: 0 10px 22px rgba(164, 43, 43, 0.28);
+        }
+
+        .edit-form {
+            display: none;
+            margin-top: 14px;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-strong);
+            background: #f5fafc;
+            width: 100%;
+        }
+
+        .edit-form input {
+            width: 100%;
+            margin-bottom: 10px;
+            min-height: 40px;
+            border: 1px solid var(--border-strong);
+            border-radius: 9px;
+            padding: 9px 12px;
+            background: #fff;
+            font-size: 0.9rem;
+        }
+
+        .edit-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 111, 142, 0.14);
+        }
+
+        .applications-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2.2fr) minmax(220px, 0.8fr);
+            gap: 14px;
+            align-items: start;
+        }
+
+        #applicationsContainer,
+        #eventApplicationsContainer {
+            overflow-x: auto;
+            border: 1px solid #dce7f0;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .applications-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 680px;
+        }
+
+        .applications-table th,
+        .applications-table td {
+            padding: 9px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e3ecf3;
+            vertical-align: top;
+            color: #1a364f;
+            font-size: 0.8rem;
+            word-break: break-word;
+        }
+
+        .applications-table th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(180deg, #f0f6fb, #e8f1f8);
+            color: #0f2d44;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 800;
+            z-index: 1;
+        }
+
+        .applications-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .applications-table tbody tr:hover {
+            background: #f2f8fc;
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        .action-btn {
+            min-height: 32px;
+            padding: 0 10px;
+            font-size: 0.78rem;
+            border-radius: 8px;
+            line-height: 1;
+        }
+
+        .type-count-panel {
+            background: linear-gradient(180deg, #ffffff, #f5fafc);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .type-count-panel h3 {
+            color: #12364f;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            font-family: 'Sora', 'Segoe UI', sans-serif;
+        }
+
+        .type-count-list {
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .type-count-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 9px;
+            border: 1px solid #d8e4ee;
+            background: #fff;
+            color: #1f3e56;
+            font-size: 0.86rem;
+        }
+
+        .type-count-badge {
+            min-width: 28px;
+            text-align: center;
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #ffffff;
+            background: #106f8f;
+        }
+
+        .type-count-empty,
+        .no-applications {
+            color: #667c8f;
+            font-size: 0.9rem;
+        }
+
+        .no-applications {
+            text-align: center;
+            padding: 28px 14px;
+        }
+
+        .application-details {
+            margin-top: 12px;
+            border-left: 4px solid #0f6f8e;
+            background: #f2f8fc;
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: #20415a;
+        }
+
+        .application-details strong {
+            color: #0e4b65;
+        }
+
+        .back-btn {
+            display: block;
+            width: fit-content;
+            margin: 4px auto 0;
+            padding: 11px 20px;
+            text-decoration: none;
+            color: #f3fbff;
+            background: linear-gradient(180deg, #136f8f, #0f5672);
+            box-shadow: 0 12px 24px rgba(15, 87, 114, 0.28);
+        }
+
+        .back-btn:focus-visible,
+        .admin-search:focus-visible,
+        button:focus-visible,
+        .edit-form input:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(15, 111, 142, 0.25);
+        }
+
+        @media (max-width: 1080px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(180px, 1fr));
+            }
+
+            .applications-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            body {
+                padding: 12px;
+            }
+
+            .admin-container {
+                padding: 20px 14px;
+                border-radius: 18px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+            }
+
+            .admin-subtitle {
+                font-size: 0.9rem;
+                margin-bottom: 20px;
+            }
+
+            .admin-section {
+                padding: 14px;
+                margin-bottom: 16px;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .user-item {
+                flex-direction: column;
+            }
+
+            .user-actions {
+                width: 100%;
+            }
+
+            .user-actions button {
+                flex: 1 1 calc(50% - 4px);
+            }
+
+            .admin-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .admin-search {
+                width: 100%;
+            }
+
+            #applicationsContainer,
+            #eventApplicationsContainer {
+                overflow-x: hidden;
+            }
+
+            .applications-table {
+                min-width: 100%;
+                table-layout: fixed;
+            }
+
+            .applications-table th,
+            .applications-table td {
+                font-size: 0.74rem;
+                padding: 7px 6px;
+            }
+
+            .action-btn {
+                min-height: 28px;
+                padding: 0 8px;
+                font-size: 0.72rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Admin Panel</h1>
+        <p id="adminSubtitle" class="admin-subtitle">Operations oversight, searchable records, and export-ready governance views.</p>
+
+        <div class="admin-section" style="margin-bottom: 35px;">
+            <div class="summary-grid">
+                <div class="summary-card"><div id="sumUsers" class="value">0</div><div class="label">Registered Users</div></div>
+                <div class="summary-card"><div id="sumServices" class="value">0</div><div class="label">Service Applications</div></div>
+                <div class="summary-card"><div id="sumEvents" class="value">0</div><div class="label">Event Records</div></div>
+                <div class="summary-card"><div id="sumReadiness" class="value">0%</div><div class="label">Readiness Score</div></div>
+            </div>
+
+            <div class="admin-toolbar">
+                <input id="adminSearch" class="admin-search" type="search" placeholder="Search usernames, applicants, emails, locations, or event names" />
+                <button id="exportUsersBtn" class="edit-btn" type="button">Export Users CSV</button>
+                <button id="exportServicesBtn" class="edit-btn" type="button">Export Services CSV</button>
+                <button id="exportEventsBtn" class="edit-btn" type="button">Export Events CSV</button>
+            </div>
+        </div>
+        
+        <div class="admin-section">
+            <h2>User Management</h2>
+            <ul class="user-list" id="userList"></ul>
+        </div>
+
+        <div class="admin-section">
+            <h2>Service Applications</h2>
+            <div class="applications-layout">
+                <div id="applicationsContainer">
+                    <table class="applications-table" id="applicationsTable">
+                        <thead>
+                            <tr>
+                                <th>Service Type</th>
+                                <th>Applicant Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Application Type</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicationsBody"></tbody>
+                    </table>
+                    <div class="no-applications" id="noApplications" style="display: none;">
+                        No service applications found.
+                    </div>
+                </div>
+
+                <aside class="type-count-panel">
+                    <h3>Service Type Counts</h3>
+                    <ul class="type-count-list" id="serviceTypeCountList"></ul>
+                    <div class="type-count-empty" id="noServiceTypeCounts" style="display: none;">No service type counts available.</div>
+                </aside>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <h2>Event Management</h2>
+            <div class="applications-layout">
+                <div id="eventApplicationsContainer">
+                    <table class="applications-table" id="eventApplicationsTable">
+                        <thead>
+                            <tr>
+                                <th>Event Name</th>
+                                <th>Event Date</th>
+                                <th>Location</th>
+                                <th>Phone</th>
+                                <th>Stage Size</th>
+                                <th>Event Type</th>
+                                <th>Status</th>
+                                <th>Saved On</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventApplicationsBody"></tbody>
+                    </table>
+                    <div class="no-applications" id="noEventApplications" style="display: none;">
+                        No event records found.
+                    </div>
+                </div>
+
+                <aside class="type-count-panel">
+                    <h3>Event Type Counts</h3>
+                    <ul class="type-count-list" id="eventTypeCountList"></ul>
+                    <div class="type-count-empty" id="noEventTypeCounts" style="display: none;">No event type counts available.</div>
+                </aside>
+            </div>
+        </div>
+
+        <a href="options.html" class="back-btn">← Back to Options</a>
+    </div>
+
+    <script src="app-shared.js"></script>
+    <script>
+        const adminSearch = document.getElementById('adminSearch');
+
+        // Get users from localStorage
+        function getUsers() {
+            return AppShared.readArray('users');
+        }
+
+        // Save users to localStorage
+        function saveUsers(users) {
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+
+        function matchesSearch(values) {
+            const query = adminSearch.value.trim().toLowerCase();
+            if (!query) return true;
+            return values.some((value) => String(value || '').toLowerCase().includes(query));
+        }
+
+        function maskPassword(value) {
+            const length = String(value || '').length;
+            if (!length) return 'Not set';
+            return '*'.repeat(Math.max(6, Math.min(length, 10))) + ' (' + length + ' chars)';
+        }
+
+        function renderSummary() {
+            const profile = AppShared.getProjectProfile();
+            const overview = AppShared.getOverview(6);
+
+            document.getElementById('adminSubtitle').textContent =
+                'Administration for ' + profile.projectName + ': records, exports, and review governance in one place.';
+            document.getElementById('sumUsers').textContent = overview.usersCount;
+            document.getElementById('sumServices').textContent = overview.applicationsCount;
+            document.getElementById('sumEvents').textContent = overview.eventCount;
+            document.getElementById('sumReadiness').textContent = overview.readinessScore + '%';
+        }
+
+        // Render user list
+        function renderUsers() {
+            const users = getUsers()
+                .map((user, index) => ({ user, index }))
+                .filter(({ user }) => matchesSearch([user.username]));
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+
+            if (!users.length) {
+                userList.innerHTML = '<li class="user-item"><div class="user-info"><strong>No matching users found.</strong></div></li>';
+                return;
+            }
+
+            users.forEach(({ user, index }) => {
+                const li = document.createElement('li');
+                li.className = 'user-item';
+                li.innerHTML = `
+                    <div class="user-info">
+                        <strong>Username:</strong> ${user.username}<br>
+                        <span class="password-mask">Stored password: ${maskPassword(user.password)}</span>
+                    </div>
+                    <div class="user-actions">
+                        <button class="edit-btn" onclick="editUser(${index})">Edit</button>
+                        <button class="delete-btn" onclick="deleteUser(${index})">Delete</button>
+                    </div>
+                    <div class="edit-form" id="editForm${index}">
+                        <input type="text" id="editUsername${index}" value="${user.username}" placeholder="Username">
+                        <input type="password" id="editPassword${index}" value="${user.password}" placeholder="Password">
+                        <button onclick="saveEdit(${index})">Save</button>
+                        <button onclick="cancelEdit(${index})">Cancel</button>
+                    </div>
+                `;
+                userList.appendChild(li);
+            });
+        }
+
+        // Edit user
+        function editUser(index) {
+            const editForm = document.getElementById(`editForm${index}`);
+            editForm.style.display = editForm.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // Save edit
+        function saveEdit(index) {
+            const users = getUsers();
+            const newUsername = document.getElementById(`editUsername${index}`).value;
+            const newPassword = document.getElementById(`editPassword${index}`).value;
+
+            if (newUsername && newPassword) {
+                users[index] = { username: newUsername, password: newPassword };
+                saveUsers(users);
+                renderSummary();
+                renderUsers();
+            }
+        }
+
+        // Cancel edit
+        function cancelEdit(index) {
+            document.getElementById(`editForm${index}`).style.display = 'none';
+        }
+
+        // Delete user
+        function deleteUser(index) {
+            if (confirm('Are you sure you want to delete this user?')) {
+                const users = getUsers();
+                users.splice(index, 1);
+                saveUsers(users);
+                renderSummary();
+                renderUsers();
+            }
+        }
+
+        // Get applications from localStorage
+        function getApplications() {
+            return AppShared.readArray('serviceApplications');
+        }
+
+        // Get event records from localStorage
+        function getEventApplications() {
+            return AppShared.readArray('eventApplications');
+        }
+
+        function normalizeEventTypeLabel(value) {
+            if (value === 'led_only') return 'LED Only';
+            if (value === 'sound_only') return 'Sound Only';
+            if (value === 'both') return 'LED + DJ';
+            return value || 'N/A';
+        }
+
+        function renderTypeCounts(items, key, listElementId, emptyElementId, formatter) {
+            const listElement = document.getElementById(listElementId);
+            const emptyElement = document.getElementById(emptyElementId);
+            if (!listElement || !emptyElement) return;
+
+            const counts = {};
+            items.forEach((item) => {
+                const rawValue = item[key] || 'N/A';
+                const label = formatter ? formatter(rawValue) : rawValue;
+                counts[label] = (counts[label] || 0) + 1;
+            });
+
+            const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+            if (!entries.length) {
+                listElement.innerHTML = '';
+                emptyElement.style.display = 'block';
+                return;
+            }
+
+            emptyElement.style.display = 'none';
+            listElement.innerHTML = entries.map(([label, count]) => `
+                <li class="type-count-item">
+                    <span>${label}</span>
+                    <span class="type-count-badge">${count}</span>
+                </li>
+            `).join('');
+        }
+
+        // Render applications list
+        function renderApplications() {
+            const applications = getApplications()
+                .map((application, index) => ({ application, index }))
+                .filter(({ application }) => matchesSearch([
+                    application.serviceType,
+                    application.applicantName,
+                    application.applicantEmail,
+                    application.applicantPhone,
+                    application.applicationType,
+                    application.status || ''
+                ]));
+            const applicationsBody = document.getElementById('applicationsBody');
+            const noApplications = document.getElementById('noApplications');
+            
+            applicationsBody.innerHTML = '';
+
+            if (applications.length === 0) {
+                noApplications.style.display = 'block';
+                renderTypeCounts([], 'serviceType', 'serviceTypeCountList', 'noServiceTypeCounts');
+                return;
+            }
+
+            noApplications.style.display = 'none';
+            renderTypeCounts(applications.map(({ application }) => application), 'serviceType', 'serviceTypeCountList', 'noServiceTypeCounts');
+
+            applications.forEach(({ application, index }) => {
+                const row = document.createElement('tr');
+                const applicationDate = new Date(application.timestamp).toLocaleDateString();
+                const status = application.status || 'pending';
+                const statusColors = { approved: '#d1fae5|#065f46', disapproved: '#fee2e2|#991b1b', pending: '#fef9c3|#854d0e' };
+                const [bg, color] = (statusColors[status] || statusColors.pending).split('|');
+                const statusLabel = status === 'approved' ? 'OK APPROVED' : status === 'disapproved' ? 'NO DISAPPROVED' : 'PENDING';
+                const updatedDate = application.statusUpdatedAt ? new Date(application.statusUpdatedAt).toLocaleString() : '';
+                const statusDisplay = updatedDate ? `<strong>${statusLabel}</strong><br><small style="color:#666;font-size:0.8rem;">Updated ${updatedDate}</small>` : statusLabel;
+                const statusBadge = `<span style="background:${bg};color:${color};padding:6px 10px;border-radius:8px;font-size:11px;font-weight:800;text-transform:uppercase;">${statusDisplay}</span>`;
+                
+                row.innerHTML = `
+                    <td>${application.serviceType}</td>
+                    <td>${application.applicantName}</td>
+                    <td>${application.applicantEmail}</td>
+                    <td>${application.applicantPhone}</td>
+                    <td>${application.applicationType}</td>
+                    <td>${applicationDate}</td>
+                    <td>${statusBadge}</td>
+                    <td class="action-cell">
+                        <button class="edit-btn action-btn" onclick="viewApplicationDetails(${index})">View</button>
+                        ${status !== 'approved'   ? `<button class="edit-btn action-btn"   style="background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;" onclick="updateServiceStatus(${index},'approved')" title="Approve">✓ Approve</button>` : ''}
+                        ${status !== 'disapproved'? `<button class="delete-btn action-btn" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;" onclick="updateServiceStatus(${index},'disapproved')" title="Disapprove">✕ Disapprove</button>` : ''}
+                        <button class="delete-btn action-btn" onclick="deleteApplication(${index})">Delete</button>
+                    </td>
+                `;
+                applicationsBody.appendChild(row);
+            });
+        }
+
+        // Render event records list
+        function renderEventApplications() {
+            const eventApplications = getEventApplications()
+                .map((eventApplication, index) => ({ eventApplication, index }))
+                .filter(({ eventApplication }) => matchesSearch([
+                    eventApplication.eventName,
+                    eventApplication.eventDate,
+                    eventApplication.eventLocation,
+                    eventApplication.eventPhone,
+                    eventApplication.eventType,
+                    eventApplication.userId
+                ]));
+            const eventApplicationsBody = document.getElementById('eventApplicationsBody');
+            const noEventApplications = document.getElementById('noEventApplications');
+
+            eventApplicationsBody.innerHTML = '';
+
+            if (eventApplications.length === 0) {
+                noEventApplications.style.display = 'block';
+                renderTypeCounts([], 'eventType', 'eventTypeCountList', 'noEventTypeCounts', normalizeEventTypeLabel);
+                return;
+            }
+
+            noEventApplications.style.display = 'none';
+            renderTypeCounts(eventApplications.map(({ eventApplication }) => eventApplication), 'eventType', 'eventTypeCountList', 'noEventTypeCounts', normalizeEventTypeLabel);
+
+            eventApplications.forEach(({ eventApplication, index }) => {
+                const row = document.createElement('tr');
+                const savedDate = new Date(eventApplication.timestamp).toLocaleDateString();
+                const eventDate = eventApplication.eventDate || 'N/A';
+                const location = eventApplication.eventLocation || 'N/A';
+                const phone = eventApplication.eventPhone || 'N/A';
+                const stageSize = `${eventApplication.stageWidthFt || 'N/A'}ft x ${eventApplication.stageHeightFt || 'N/A'}ft`;
+                const eventType = normalizeEventTypeLabel(eventApplication.eventType);
+                const status = eventApplication.status || 'pending';
+                const statusColors = { approved: '#d1fae5|#065f46', disapproved: '#fee2e2|#991b1b', pending: '#fef9c3|#854d0e' };
+                const [bg, color] = (statusColors[status] || statusColors.pending).split('|');
+                const statusLabel = status === 'approved' ? 'OK APPROVED' : status === 'disapproved' ? 'NO DISAPPROVED' : 'PENDING';
+                const updatedDate = eventApplication.statusUpdatedAt ? new Date(eventApplication.statusUpdatedAt).toLocaleString() : '';
+                const statusDisplay = updatedDate ? `<strong>${statusLabel}</strong><br><small style="color:#666;font-size:0.8rem;">Updated ${updatedDate}</small>` : statusLabel;
+                const statusBadge = `<span style="background:${bg};color:${color};padding:6px 10px;border-radius:8px;font-size:11px;font-weight:800;text-transform:uppercase;">${statusDisplay}</span>`;
+
+                row.innerHTML = `
+                    <td>${eventApplication.eventName || 'N/A'}</td>
+                    <td>${eventDate}</td>
+                    <td>${location}</td>
+                    <td>${phone}</td>
+                    <td>${stageSize}</td>
+                    <td>${eventType}</td>
+                    <td>${statusBadge}</td>
+                    <td>${savedDate}</td>
+                    <td class="action-cell">
+                        <button class="edit-btn action-btn" onclick="viewEventDetails(${index})">View</button>
+                        ${status !== 'approved'   ? `<button class="edit-btn action-btn"   style="background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;" onclick="updateEventStatus(${index},'approved')">✓ Approve</button>` : ''}
+                        ${status !== 'disapproved'? `<button class="delete-btn action-btn" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;" onclick="updateEventStatus(${index},'disapproved')">✕ Disapprove</button>` : ''}
+                        <button class="delete-btn action-btn" onclick="deleteEventApplication(${index})">Delete</button>
+                    </td>
+                `;
+                eventApplicationsBody.appendChild(row);
+            });
+        }
+
+        // View application details
+        function viewApplicationDetails(index) {
+            const applications = getApplications();
+            const application = applications[index];
+            
+            const details = `
+                <strong>Service Type:</strong> ${application.serviceType}<br>
+                <strong>Applicant Name:</strong> ${application.applicantName}<br>
+                <strong>Email:</strong> ${application.applicantEmail}<br>
+                <strong>Phone:</strong> ${application.applicantPhone}<br>
+                <strong>Address:</strong> ${application.applicantAddress}<br>
+                <strong>Application Type:</strong> ${application.applicationType}<br>
+                <strong>Additional Info:</strong> ${application.additionalInfo || 'N/A'}<br>
+                <strong>User ID:</strong> ${application.userId}<br>
+                <strong>Submitted Date:</strong> ${new Date(application.timestamp).toLocaleString()}
+            `;
+            
+            alert(`Application Details:\n\n${details.replace(/<br>/g, '\n').replace(/<strong>/g, '').replace(/<\/strong>/g, '')}`);
+        }
+
+        // Delete application
+        function deleteApplication(index) {
+            if (confirm('Are you sure you want to delete this application?')) {
+                const applications = getApplications();
+                applications.splice(index, 1);
+                localStorage.setItem('serviceApplications', JSON.stringify(applications));
+                renderSummary();
+                renderApplications();
+            }
+        }
+
+        // Update event status (approve / disapprove)
+        function updateEventStatus(index, newStatus) {
+            const label = newStatus === 'approved' ? 'Approve' : 'Disapprove';
+            const eventApplications = getEventApplications();
+            const eventRecord = eventApplications[index];
+            if (!eventRecord) return;
+            const eventName = eventRecord.eventName || 'Event';
+            if (!confirm(`${label} "${eventName}"?`)) return;
+            eventApplications[index].status = newStatus;
+            eventApplications[index].statusUpdatedAt = new Date().toISOString();
+            localStorage.setItem('eventApplications', JSON.stringify(eventApplications));
+            AppShared.addActivity(`Admin ${newStatus} event: ${eventName}`);
+            renderSummary();
+            renderEventApplications();
+            const msg = newStatus === 'approved'
+                ? `✓ "${eventName}" has been APPROVED.`
+                : `✗ "${eventName}" has been DISAPPROVED.`;
+            showAdminToast(msg, newStatus === 'approved' ? '#065f46' : '#991b1b', newStatus === 'approved' ? '#d1fae5' : '#fee2e2');
+        }
+
+        // Toast notification
+        function showAdminToast(message, color, bg) {
+            let toast = document.getElementById('adminActionToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'adminActionToast';
+                Object.assign(toast.style, {
+                    position: 'fixed', bottom: '26px', right: '26px',
+                    padding: '13px 22px', borderRadius: '12px',
+                    fontWeight: '800', fontSize: '14px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                    transition: 'opacity 0.35s ease, transform 0.35s ease',
+                    zIndex: '9999', transform: 'translateY(60px)', opacity: '0',
+                    pointerEvents: 'none'
+                });
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.style.background = bg;
+            toast.style.color = color;
+            toast.style.transform = 'translateY(0)';
+            toast.style.opacity = '1';
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(60px)'; }, 2800);
+        }
+
+        // View event details
+        function viewEventDetails(index) {
+            const eventApplications = getEventApplications();
+            const eventApplication = eventApplications[index];
+            const status = (eventApplication.status || 'pending').toUpperCase();
+            const updatedAt = eventApplication.statusUpdatedAt ? new Date(eventApplication.statusUpdatedAt).toLocaleString() : 'Not yet reviewed';
+
+            const details = `
+                Event Name: ${eventApplication.eventName || 'N/A'}
+                Event Date: ${eventApplication.eventDate || 'N/A'}
+                Event Location: ${eventApplication.eventLocation || 'N/A'}
+                Event Phone: ${eventApplication.eventPhone || 'N/A'}
+                Event Notes: ${eventApplication.eventNotes || 'N/A'}
+                Stage Width: ${eventApplication.stageWidthFt || 'N/A'}ft
+                Stage Height: ${eventApplication.stageHeightFt || 'N/A'}ft
+                LED Pattern: ${eventApplication.ledPattern || 'N/A'}
+                Sound System: ${eventApplication.soundSystem || 'N/A'}
+                Event Type: ${normalizeEventTypeLabel(eventApplication.eventType)}
+                User ID: ${eventApplication.userId || 'N/A'}
+                Saved On: ${new Date(eventApplication.timestamp).toLocaleString()}
+                ─────────────────────────────
+                ADMIN STATUS: ${status}
+                Status Updated: ${updatedAt}
+            `;
+
+            alert(`Event Details:\n\n${details}`);
+        }
+
+        // Delete event record
+        function deleteEventApplication(index) {
+            if (confirm('Are you sure you want to delete this event record?')) {
+                const eventApplications = getEventApplications();
+                eventApplications.splice(index, 1);
+                localStorage.setItem('eventApplications', JSON.stringify(eventApplications));
+                renderSummary();
+                renderEventApplications();
+            }
+        }
+
+        // Update service status (approve / disapprove)
+        function updateServiceStatus(index, newStatus) {
+            const label = newStatus === 'approved' ? 'Approve' : 'Disapprove';
+            const applications = getApplications();
+            const application = applications[index];
+            if (!application) return;
+            const applicantName = application.applicantName || 'Applicant';
+            if (!confirm(`${label} "${applicantName}"?`)) return;
+            applications[index].status = newStatus;
+            applications[index].statusUpdatedAt = new Date().toISOString();
+            localStorage.setItem('serviceApplications', JSON.stringify(applications));
+            AppShared.addActivity(`Admin ${newStatus} service application: ${applicantName}`);
+            renderSummary();
+            renderApplications();
+            const msg = newStatus === 'approved'
+                ? `✓ "${applicantName}" has been APPROVED.`
+                : `✗ "${applicantName}" has been DISAPPROVED.`;
+            showAdminToast(msg, newStatus === 'approved' ? '#065f46' : '#991b1b', newStatus === 'approved' ? '#d1fae5' : '#fee2e2');
+        }
+
+        // Load admin data on page load
+        renderSummary();
+        renderUsers();
+        renderApplications();
+        renderEventApplications();
+
+        adminSearch.addEventListener('input', function() {
+            renderUsers();
+            renderApplications();
+            renderEventApplications();
+        });
+
+        document.getElementById('exportUsersBtn').addEventListener('click', function() {
+            const users = getUsers().map((user) => ({
+                username: user.username,
+                passwordLength: String(user.password || '').length
+            }));
+            AppShared.exportCsv('users-export.csv', users);
+        });
+
+        document.getElementById('exportServicesBtn').addEventListener('click', function() {
+            const applications = getApplications().map((application) => ({
+                serviceType: application.serviceType,
+                applicantName: application.applicantName,
+                applicantEmail: application.applicantEmail,
+                applicantPhone: application.applicantPhone,
+                applicationType: application.applicationType,
+                userId: application.userId,
+                submittedAt: new Date(application.timestamp).toLocaleString()
+            }));
+            AppShared.exportCsv('service-applications.csv', applications);
+        });
+
+        document.getElementById('exportEventsBtn').addEventListener('click', function() {
+            const events = getEventApplications().map((eventApplication) => ({
+                eventName: eventApplication.eventName,
+                eventDate: eventApplication.eventDate,
+                eventLocation: eventApplication.eventLocation,
+                eventPhone: eventApplication.eventPhone,
+                stageWidthFt: eventApplication.stageWidthFt,
+                stageHeightFt: eventApplication.stageHeightFt,
+                eventType: normalizeEventTypeLabel(eventApplication.eventType),
+                userId: eventApplication.userId,
+                savedAt: new Date(eventApplication.timestamp).toLocaleString()
+            }));
+            AppShared.exportCsv('event-records.csv', events);
+        });
+
+    </script>
+
+    <script>
+        // Translator functionality for admin page
+        const translations = {
+            hi: {
+                "Admin Panel": "एडमिन पैनल",
+                "User Management": "उपयोगकर्ता प्रबंधन",
+                "Registered Users": "पंजीकृत उपयोगकर्ता",
+                "No users registered yet.": "अभी तक कोई उपयोगकर्ता पंजीकृत नहीं हुआ है।",
+                "Name:": "नाम:",
+                "Email:": "ईमेल:",
+                "Phone:": "फोन:",
+                "Address:": "पता:",
+                "Registered Date:": "पंजीकरण तिथि:",
+                "Delete": "हटाएं",
+                "Application Management": "आवेदन प्रबंधन",
+                "Service Applications": "सेवा आवेदन",
+                "No applications submitted yet.": "अभी तक कोई आवेदन जमा नहीं हुआ है।",
+                "Applicant Name:": "आवेदक का नाम:",
+                "Applicant Email:": "आवेदक का ईमेल:",
+                "Applicant Phone:": "आवेदक का फोन:",
+                "Applicant Address:": "आवेदक का पता:",
+                "Application Type:": "आवेदन प्रकार:",
+                "Additional Info:": "अतिरिक्त जानकारी:",
+                "User ID:": "उपयोगकर्ता आईडी:",
+                "Submitted Date:": "जमा करने की तिथि:",
+                "View Details": "विवरण देखें",
+                "Are you sure you want to delete this user?": "क्या आप वाकई इस उपयोगकर्ता को हटाना चाहते हैं?",
+                "Are you sure you want to delete this application?": "क्या आप वाकई इस आवेदन को हटाना चाहते हैं?",
+                "Application Details:": "आवेदन विवरण:"
+            },
+            te: {
+                "Admin Panel": "అడ్మిన్ ప్యానెల్",
+                "User Management": "వినియోగదారు నిర్వహణ",
+                "Registered Users": "నమోదైన వినియోగదారులు",
+                "No users registered yet.": "ఇంకా ఎవరూ నమోదు కాలేదు.",
+                "Name:": "పేరు:",
+                "Email:": "ఇమెయిల్:",
+                "Phone:": "ఫోన్:",
+                "Address:": "చిరునామా:",
+                "Registered Date:": "నమోదు తేదీ:",
+                "Delete": "తొలగించు",
+                "Application Management": "అప్లికేషన్ నిర్వహణ",
+                "Service Applications": "సేవా అప్లికేషన్లు",
+                "No applications submitted yet.": "ఇంకా ఎటువంటి అప్లికేషన్లు సమర్పించలేదు.",
+                "Applicant Name:": "అప్లైయర్ పేరు:",
+                "Applicant Email:": "అప్లైయర్ ఇమెయిల్:",
+                "Applicant Phone:": "అప్లైయర్ ఫోన్:",
+                "Applicant Address:": "అప్లైయర్ చిరునామా:",
+                "Application Type:": "అప్లికేషన్ రకం:",
+                "Additional Info:": "అదనపు సమాచారం:",
+                "User ID:": "వినియోగదారు ఐడి:",
+                "Submitted Date:": "సమర్పించిన తేదీ:",
+                "View Details": "వివరాలు చూడండి",
+                "Are you sure you want to delete this user?": "మీరు ఖచ్చితంగా ఈ వినియోగదారుని తొలగించాలనుకుంటున్నారా?",
+                "Are you sure you want to delete this application?": "మీరు ఖచ్చితంగా ఈ అప్లికేషన్ తొలగించాలనుకుంటున్నారా?",
+                "Application Details:": "అప్లికేషన్ వివరాలు:"
+            },
+            mr: {
+                "Admin Panel": "अॅडमिन पॅनल",
+                "User Management": "वापरकर्ता व्यवस्थापन",
+                "Registered Users": "नोंदणीकृत वापरकर्ते",
+                "No users registered yet.": "अद्याप कोणतेही वापरकर्ते नोंदणीकृत नाहीत.",
+                "Name:": "नाव:",
+                "Email:": "ईमेल:",
+                "Phone:": "फोन:",
+                "Address:": "पत्ता:",
+                "Registered Date:": "नोंदणी तारीख:",
+                "Delete": "हटवा",
+                "Application Management": "अर्ज व्यवस्थापन",
+                "Service Applications": "सेवा अर्ज",
+                "No applications submitted yet.": "अद्याप कोणतेही अर्ज सादर झाले नाहीत.",
+                "Applicant Name:": "अर्जदाराचे नाव:",
+                "Applicant Email:": "अर्जदाराचा ईमेल:",
+                "Applicant Phone:": "अर्जदाराचा फोन:",
+                "Applicant Address:": "अर्जदाराचा पत्ता:",
+                "Application Type:": "अर्ज प्रकार:",
+                "Additional Info:": "अतिरिक्त माहिती:",
+                "User ID:": "वापरकर्ता आयडी:",
+                "Submitted Date:": "सादर केलेली तारीख:",
+                "View Details": "तपशील पहा",
+                "Are you sure you want to delete this user?": "तुम्हाला खात्री आहे की तुम्ही हा वापरकर्ता हटवू इच्छिता?",
+                "Are you sure you want to delete this application?": "तुम्हाला खात्री आहे की तुम्ही हा अर्ज हटवू इच्छिता?",
+                "Application Details:": "अर्ज तपशील:"
+            },
+            ta: {
+                "Admin Panel": "நிர்வாகக் குழு",
+                "User Management": "பயனர் நிர்வாகம்",
+                "Registered Users": "பதிவு செய்யப்பட்ட பயனர்கள்",
+                "No users registered yet.": "இன்னும் எந்த பயனர்களும் பதிவு செய்யப்படவில்லை.",
+                "Name:": "பெயர்:",
+                "Email:": "மின்னஞ்சல்:",
+                "Phone:": "தொலைபேசி:",
+                "Address:": "முகவரி:",
+                "Registered Date:": "பதிவு தேதி:",
+                "Delete": "நீக்கு",
+                "Application Management": "விண்ணப்ப நிர்வாகம்",
+                "Service Applications": "சேவை விண்ணப்பங்கள்",
+                "No applications submitted yet.": "இன்னும் எந்த விண்ணப்பங்களும் சமர்ப்பிக்கப்படவில்லை.",
+                "Applicant Name:": "விண்ணப்பதாரர் பெயர்:",
+                "Applicant Email:": "விண்ணப்பதாரர் மின்னஞ்சல்:",
+                "Applicant Phone:": "விண்ணப்பதாரர் தொலைபேசி:",
+                "Applicant Address:": "விண்ணப்பதாரர் முகவரி:",
+                "Application Type:": "விண்ணப்ப வகை:",
+                "Additional Info:": "கூடுதல் தகவல்:",
+                "User ID:": "பயனர் ஐடி:",
+                "Submitted Date:": "சமர்ப்பிக்கப்பட்ட தேதி:",
+                "View Details": "விவரங்களைப் பார்க்க",
+                "Are you sure you want to delete this user?": "இந்த பயனரை நீக்க விரும்புகிறீர்களா?",
+                "Are you sure you want to delete this application?": "இந்த விண்ணப்பத்தை நீக்க விரும்புகிறீர்களா?",
+                "Application Details:": "விண்ணப்ப விவரங்கள்:"
+            },
+            ur: {
+                "Admin Panel": "ایڈمن پینل",
+                "User Management": "صارف انتظام",
+                "Registered Users": "رجسٹرڈ صارفین",
+                "No users registered yet.": "ابھی تک کوئی صارف رجسٹر نہیں ہوا۔",
+                "Name:": "نام:",
+                "Email:": "ای میل:",
+                "Phone:": "فون:",
+                "Address:": "پتہ:",
+                "Registered Date:": "رجسٹریشن کی تاریخ:",
+                "Delete": "حذف کریں",
+                "Application Management": "درخواست کا انتظام",
+                "Service Applications": "سروس کی درخواستیں",
+                "No applications submitted yet.": "ابھی تک کوئی درخواست جمع نہیں کرائی گئی۔",
+                "Applicant Name:": "درخواست گزار کا نام:",
+                "Applicant Email:": "درخواست گزار کا ای میل:",
+                "Applicant Phone:": "درخواست گزار کا فون:",
+                "Applicant Address:": "درخواست گزار کا پتہ:",
+                "Application Type:": "درخواست کی قسم:",
+                "Additional Info:": "اضافی معلومات:",
+                "User ID:": "صارف کی شناخت:",
+                "Submitted Date:": "جمع کرانے کی تاریخ:",
+                "View Details": "تفصیلات دیکھیں",
+                "Are you sure you want to delete this user?": "کیا آپ واقعی اس صارف کو حذف کرنا چاہتے ہیں؟",
+                "Are you sure you want to delete this application?": "کیا آپ واقعی اس درخواست کو حذف کرنا چاہتے ہیں؟",
+                "Application Details:": "درخواست کی تفصیلات:"
+            },
+            gu: {
+                "Admin Panel": "એડમિન પેનલ",
+                "User Management": "વપરાશકર્તા વ્યવસ્થાપન",
+                "Registered Users": "નોંધાયેલ વપરાશકર્તાઓ",
+                "No users registered yet.": "હજી સુધી કોઈ વપરાશકર્તા નોંધાયા નથી.",
+                "Name:": "નામ:",
+                "Email:": "ઇમેઇલ:",
+                "Phone:": "ફોન:",
+                "Address:": "સરનામું:",
+                "Registered Date:": "નોંધણી તારીખ:",
+                "Delete": "કાઢી નાખો",
+                "Application Management": "અરજી વ્યવસ્થાપન",
+                "Service Applications": "સેવા અરજીઓ",
+                "No applications submitted yet.": "હજી સુધી કોઈ અરજી સબમિટ કરવામાં આવી નથી.",
+                "Applicant Name:": "અરજદારનું નામ:",
+                "Applicant Email:": "અરજદારનો ઇમેઇલ:",
+                "Applicant Phone:": "અરજદારનો ફોન:",
+                "Applicant Address:": "અરજદારનું સરનામું:",
+                "Application Type:": "અરજી પ્રકાર:",
+                "Additional Info:": "વધારાની માહિતી:",
+                "User ID:": "વપરાશકર્તા આઈડી:",
+                "Submitted Date:": "સબમિટ કરેલ તારીખ:",
+                "View Details": "વિગતો જુઓ",
+                "Are you sure you want to delete this user?": "શું તમે ખરેખર આ વપરાશકર્તાને કાઢી નાખવા માંગો છો?",
+                "Are you sure you want to delete this application?": "શું તમે ખરેખર આ અરજી કાઢી નાખવા માંગો છો?",
+                "Application Details:": "અરજી વિગતો:"
+            },
+            kn: {
+                "Admin Panel": "ನಿರ್ವಾಹಕ ಪ್ಯಾನಲ್",
+                "User Management": "ಬಳಕೆದಾರ ನಿರ್ವಹಣೆ",
+                "Registered Users": "ನೋಂದಾಯಿಸಿದ ಬಳಕೆದಾರರು",
+                "No users registered yet.": "ಇನ್ನೂ ಯಾವುದೇ ಬಳಕೆದಾರರು ನೋಂದಾಯಿಸಿಲ್ಲ.",
+                "Name:": "ಹೆಸರು:",
+                "Email:": "ಇಮೇಲ್:",
+                "Phone:": "ದೂರವಾಣಿ:",
+                "Address:": "ವಿಳಾಸ:",
+                "Registered Date:": "ನೋಂದಾಯಿಸಿದ ದಿನಾಂಕ:",
+                "Delete": "ಅಳಿಸಿ",
+                "Application Management": "ಅರ್ಜಿ ನಿರ್ವಹಣೆ",
+                "Service Applications": "ಸೇವಾ ಅರ್ಜಿಗಳು",
+                "No applications submitted yet.": "ಇನ್ನೂ ಯಾವುದೇ ಅರ್ಜಿಗಳು ಸಲ್ಲಿಸಲಾಗಿಲ್ಲ.",
+                "Applicant Name:": "ಅರ್ಜಿದಾರರ ಹೆಸರು:",
+                "Applicant Email:": "ಅರ್ಜಿದಾರರ ಇಮೇಲ್:",
+                "Applicant Phone:": "ಅರ್ಜಿದಾರರ ದೂರವಾಣಿ:",
+                "Applicant Address:": "ಅರ್ಜಿದಾರರ ವಿಳಾಸ:",
+                "Application Type:": "ಅರ್ಜಿ ಪ್ರಕಾರ:",
+                "Additional Info:": "ಹೆಚ್ಚುವರಿ ಮಾಹಿತಿ:",
+                "User ID:": "ಬಳಕೆದಾರ ಐಡಿ:",
+                "Submitted Date:": "ಸಲ್ಲಿಸಿದ ದಿನಾಂಕ:",
+                "View Details": "ವಿವರಗಳನ್ನು ನೋಡಿ",
+                "Are you sure you want to delete this user?": "ನೀವು ಖಚಿತವಾಗಿ ಈ ಬಳಕೆದಾರನನ್ನು ಅಳಿಸಲು ಬಯಸುತ್ತೀರಾ?",
+                "Are you sure you want to delete this application?": "ನೀವು ಖಚಿತವಾಗಿ ಈ ಅರ್ಜಿಯನ್ನು ಅಳಿಸಲು ಬಯಸುತ್ತೀರಾ?",
+                "Application Details:": "ಅರ್ಜಿ ವಿವರಗಳು:"
+            },
+            or: {
+                "Admin Panel": "ପ୍ରଶାସକ ପ୍ୟାନେଲ୍",
+                "User Management": "ବ୍ୟବହାରକାରୀ ପରିଚାଳନା",
+                "Registered Users": "ପଞ୍ଜୀକୃତ ବ୍ୟବହାରକାରୀ",
+                "No users registered yet.": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ବ୍ୟବହାରକାରୀ ପଞ୍ଜୀକୃତ ହୋଇନାହିଁ।",
+                "Name:": "ନାମ:",
+                "Email:": "ଇମେଲ୍:",
+                "Phone:": "ଫୋନ୍:",
+                "Address:": "ଠିକଣା:",
+                "Registered Date:": "ପଞ୍ଜୀକରଣ ତାରିଖ:",
+                "Delete": "ବିଲୋପ କରନ୍ତୁ",
+                "Application Management": "ଆବେଦନ ପରିଚାଳନା",
+                "Service Applications": "ସେବା ଆବେଦନ",
+                "No applications submitted yet.": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଆବେଦନ ଦାଖଲ ହୋଇନାହିଁ।",
+                "Applicant Name:": "ଆବେଦକ ନାମ:",
+                "Applicant Email:": "ଆବେଦକ ଇମେଲ୍:",
+                "Applicant Phone:": "ଆବେଦକ ଫୋନ୍:",
+                "Applicant Address:": "ଆବେଦକ ଠିକଣା:",
+                "Application Type:": "ଆବେଦନ ପ୍ରକାର:",
+                "Additional Info:": "ଅତିରିକ୍ତ ସୂଚନା:",
+                "User ID:": "ବ୍ୟବହାରକାରୀ ଆଇଡି:",
+                "Submitted Date:": "ଦାଖଲ ତାରିଖ:",
+                "View Details": "ବିସ୍ତୃତ ବିବରଣୀ ଦେଖନ୍ତୁ",
+                "Are you sure you want to delete this user?": "ଆପଣ ନିଶ୍ଚିତ କି ଏହି ବ୍ୟବହାରକାରୀଙ୍କୁ ବିଲୋପ କରିବାକୁ ଚାହୁଁଛନ୍ତି?",
+                "Are you sure you want to delete this application?": "ଆପଣ ନିଶ୍ଚିତ କି ଏହି ଆବେଦନକୁ ବିଲୋପ କରିବାକୁ ଚାହୁଁଛନ୍ତି?",
+                "Application Details:": "ଆବେଦନ ବିବରଣୀ:"
+            },
+            pa: {
+                "Admin Panel": "ਐਡਮਿਨ ਪੈਨਲ",
+                "User Management": "ਯੂਜ਼ਰ ਮੈਨੇਜਮੈਂਟ",
+                "Registered Users": "ਰਜਿਸਟਰਡ ਯੂਜ਼ਰ",
+                "No users registered yet.": "ਅਜੇ ਤੱਕ ਕੋਈ ਯੂਜ਼ਰ ਰਜਿਸਟਰ ਨਹੀਂ ਹੋਇਆ।",
+                "Name:": "ਨਾਮ:",
+                "Email:": "ਈਮੇਲ:",
+                "Phone:": "ਫੋਨ:",
+                "Address:": "ਐਡਰੈੱਸ:",
+                "Registered Date:": "ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਮਿਤੀ:",
+                "Delete": "ਮਿਟਾਓ",
+                "Application Management": "ਐਪਲੀਕੇਸ਼ਨ ਮੈਨੇਜਮੈਂਟ",
+                "Service Applications": "ਸਰਵਿਸ ਐਪਲੀਕੇਸ਼ਨਾਂ",
+                "No applications submitted yet.": "ਅਜੇ ਤੱਕ ਕੋਈ ਐਪਲੀਕੇਸ਼ਨ ਸਬਮਿਟ ਨਹੀਂ ਹੋਈ।",
+                "Applicant Name:": "ਐਪਲਾਇੰਟ ਦਾ ਨਾਮ:",
+                "Applicant Email:": "ਐਪਲਾਇੰਟ ਦਾ ਈਮੇਲ:",
+                "Applicant Phone:": "ਐਪਲਾਇੰਟ ਦਾ ਫੋਨ:",
+                "Applicant Address:": "ਐਪਲਾਇੰਟ ਦਾ ਐਡਰੈੱਸ:",
+                "Application Type:": "ਐਪਲੀਕੇਸ਼ਨ ਟਾਈਪ:",
+                "Additional Info:": "ਐਡੀਸ਼ਨਲ ਇਨਫੋ:",
+                "User ID:": "ਯੂਜ਼ਰ ਆਈਡੀ:",
+                "Submitted Date:": "ਸਬਮਿਟ ਮਿਤੀ:",
+                "View Details": "ਵੇਖੋ ਵੇਰਵੇ",
+                "Are you sure you want to delete this user?": "ਕੀ ਤੁਸੀਂ ਯਕੀਨੀ ਤੌਰ ਤੇ ਇਸ ਯੂਜ਼ਰ ਨੂੰ ਮਿਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
+                "Are you sure you want to delete this application?": "ਕੀ ਤੁਸੀਂ ਯਕੀਨੀ ਤੌਰ ਤੇ ਇਸ ਐਪਲੀਕੇਸ਼ਨ ਨੂੰ ਮਿਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
+                "Application Details:": "ਐਪਲੀਕੇਸ਼ਨ ਵੇਰਵੇ:"
+            },
+            as: {
+                "Admin Panel": "এডমিন পেনেল",
+                "User Management": "ব্যৱহাৰকাৰী ব্যৱস্থাপনা",
+                "Registered Users": "পঞ্জীয়ন কৰা ব্যৱহাৰকাৰীসকল",
+                "No users registered yet.": "এতিয়াও কোনো ব্যৱহাৰকাৰী পঞ্জীয়ন কৰা হোৱা নাই।",
+                "Name:": "নাম:",
+                "Email:": "ইমেইল:",
+                "Phone:": "ফোন:",
+                "Address:": "ঠিকনা:",
+                "Registered Date:": "পঞ্জীয়ন তাৰিখ:",
+                "Delete": "মচি পেলাওক",
+                "Application Management": "আবেদন ব্যৱস্থাপনা",
+                "Service Applications": "সেৱা আবেদনসমূহ",
+                "No applications submitted yet.": "এতিয়াও কোনো আবেদন দাখিল কৰা হোৱা নাই।",
+                "Applicant Name:": "আবেদকৰোঁতাৰ নাম:",
+                "Applicant Email:": "আবেদকৰোঁতাৰ ইমেইল:",
+                "Applicant Phone:": "আবেদকৰোঁতাৰ ফোন:",
+                "Applicant Address:": "আবেদকৰোঁতাৰ ঠিকনা:",
+                "Application Type:": "আবেদনৰ ধৰণ:",
+                "Additional Info:": "অতিৰিক্ত তথ্য:",
+                "User ID:": "ব্যৱহাৰকাৰী আইডি:",
+                "Submitted Date:": "দাখিল কৰা তাৰিখ:",
+                "View Details": "বিৱৰণ চাওক",
+                "Are you sure you want to delete this user?": "আপুনি নিশ্চিত নেকি যে এই ব্যৱহাৰকাৰীজনক মচি পেলাব খোজে?",
+                "Are you sure you want to delete this application?": "আপুনি নিশ্চিত নেকি যে এই আবেদনখন মচি পেলাব খোজে?",
+                "Application Details:": "আবেদনৰ বিৱৰণ:"
+            },
+            ml: {
+                "Admin Panel": "അഡ്മിൻ പാനൽ",
+                "User Management": "ഉപയോക്തൃ മാനേജ്മെന്റ്",
+                "Registered Users": "രജിസ്റ്റർ ചെയ്ത ഉപയോക്താക്കൾ",
+                "No users registered yet.": "ഇതുവരെ ഉപയോക്താക്കളെ രജിസ്റ്റർ ചെയ്തിട്ടില്ല.",
+                "Name:": "പേര്:",
+                "Email:": "ഇമെയിൽ:",
+                "Phone:": "ഫോൺ:",
+                "Address:": "വിലാസം:",
+                "Registered Date:": "രജിസ്റ്റർ ചെയ്ത തീയതി:",
+                "Delete": "ഇല്ലാതാക്കുക",
+                "Application Management": "അപ്ലിക്കേഷൻ മാനേജ്മെന്റ്",
+                "Service Applications": "സർവീസ് അപ്ലിക്കേഷനുകൾ",
+                "No applications submitted yet.": "ഇതുവരെ അപ്ലിക്കേഷനുകൾ സമർപ്പിച്ചിട്ടില്ല.",
+                "Applicant Name:": "അപ്ലയർ പേര്:",
+                "Applicant Email:": "അപ്ലയർ ഇമെയിൽ:",
+                "Applicant Phone:": "അപ്ലയർ ഫോൺ:",
+                "Applicant Address:": "അപ്ലയർ വിലാസം:",
+                "Application Type:": "അപ്ലിക്കേഷൻ തരം:",
+                "Additional Info:": "അധിക വിവരങ്ങൾ:",
+                "User ID:": "ഉപയോക്തൃ ഐഡി:",
+                "Submitted Date:": "സമർപ്പിച്ച തീയതി:",
+                "View Details": "വിശദാംശങ്ങൾ കാണുക",
+                "Are you sure you want to delete this user?": "ഈ ഉപയോക്താവിനെ ഇല്ലാതാക്കണമെന്ന് തീർച്ചയാണോ?",
+                "Are you sure you want to delete this application?": "ഈ അപ്ലിക്കേഷൻ ഇല്ലാതാക്കണമെന്ന് തീർച്ചയാണോ?",
+                "Application Details:": "അപ്ലിക്കേഷൻ വിശദാംശങ്ങൾ:"
+            },
+            ne: {
+                "Admin Panel": "प्रशासन प्यानल",
+                "User Management": "प्रयोगकर्ता व्यवस्थापन",
+                "Registered Users": "दर्ता भएका प्रयोगकर्ताहरू",
+                "No users registered yet.": "अहिलेसम्म कुनै प्रयोगकर्ताहरू दर्ता भएका छैनन्।",
+                "Name:": "नाम:",
+                "Email:": "इमेल:",
+                "Phone:": "फोन:",
+                "Address:": "ठेगाना:",
+                "Registered Date:": "दर्ता मिति:",
+                "Delete": "मेटाउनुहोस्",
+                "Application Management": "आवेदन व्यवस्थापन",
+                "Service Applications": "सेवा आवेदनहरू",
+                "No applications submitted yet.": "अहिलेसम्म कुनै आवेदनहरू पेश भएका छैनन्।",
+                "Applicant Name:": "आवेदकको नाम:",
+                "Applicant Email:": "आवेदकको इमेल:",
+                "Applicant Phone:": "आवेदकको फोन:",
+                "Applicant Address:": "आवेदकको ठेगाना:",
+                "Application Type:": "आवेदन प्रकार:",
+                "Additional Info:": "थप जानकारी:",
+                "User ID:": "प्रयोगकर्ता आईडी:",
+                "Submitted Date:": "पेश गरेको मिति:",
+                "View Details": "विवरणहरू हेर्नुहोस्",
+                "Are you sure you want to delete this user?": "के तपाईँ यो प्रयोगकर्तालाई मेटाउन निश्चित हुनुहुन्छ?",
+                "Are you sure you want to delete this application?": "के तपाईँ यो आवेदन मेटाउन निश्चित हुनुहुन्छ?",
+                "Application Details:": "आवेदन विवरणहरू:"
+            },
+            si: {
+                "Admin Panel": "පරිපාලක පුවරුව",
+                "User Management": "පරිශීලක කළමනාකරණය",
+                "Registered Users": "ලියාපදිංචි පරිශීලකයින්",
+                "No users registered yet.": "තවම කිසිදු පරිශීලකයෙක් ලියාපදිංචි වී නොමැත.",
+                "Name:": "නම:",
+                "Email:": "විද්‍යුත් තැපෑල:",
+                "Phone:": "දුරකථනය:",
+                "Address:": "ලිපිනය:",
+                "Registered Date:": "ලියාපදිංචි දිනය:",
+                "Delete": "මකන්න",
+                "Application Management": "අයදුම් කළමනාකරණය",
+                "Service Applications": "සේවා අයදුම්",
+                "No applications submitted yet.": "තවම කිසිදු අයදුම් ඉදිරිපත් කර නොමැත.",
+                "Applicant Name:": "අයදුම්කරුගේ නම:",
+                "Applicant Email:": "අයදුම්කරුගේ විද්‍යුත් තැපෑල:",
+                "Applicant Phone:": "අයදුම්කරුගේ දුරකථනය:",
+                "Applicant Address:": "අයදුම්කරුගේ ලිපිනය:",
+                "Application Type:": "අයදුම් වර්ගය:",
+                "Additional Info:": "අතිරික්ත තොරතුරු:",
+                "User ID:": "පරිශීලක අංකය:",
+                "Submitted Date:": "ඉදිරිපත් කරන ලද දිනය:",
+                "View Details": "විස්තර බලන්න",
+                "Are you sure you want to delete this user?": "ඔබට මෙම පරිශීලකයා මකා දැමීමට අවශ්‍ය බව විශ්වාසද?",
+                "Are you sure you want to delete this application?": "ඔබට මෙම අයදුම් මකා දැමීමට අවශ්‍ය ඬව විශ්වාසද?",
+                "Application Details:": "අයදුම් විස්තර:"
+            },
+            bn: {
+                "Admin Panel": "অ্যাডমিন প্যানেল",
+                "User Management": "ব্যবহারকারী ব্যবস্থাপনা",
+                "Registered Users": "নিবন্ধিত ব্যবহারকারীরা",
+                "No users registered yet.": "এখনও কোনও ব্যবহারকারী নিবন্ধিত হননি।",
+                "Name:": "নাম:",
+                "Email:": "ইমেল:",
+                "Phone:": "ফোন:",
+                "Address:": "ঠিকানা:",
+                "Registered Date:": "নিবন্ধন তারিখ:",
+                "Delete": "মুছুন",
+                "Application Management": "আবেদন ব্যবস্থাপনা",
+                "Service Applications": "সেবা আবেদন",
+                "No applications submitted yet.": "এখনও কোনও আবেদন জমা দেওয়া হয়নি।",
+                "Applicant Name:": "আবেদনকারীর নাম:",
+                "Applicant Email:": "আবেদনকারীর ইমেল:",
+                "Applicant Phone:": "আবেদনকারীর ফোন:",
+                "Applicant Address:": "আবেদনকারীর ঠিকানা:",
+                "Application Type:": "আবেদনের ধরন:",
+                "Additional Info:": "অতিরিক্ত তথ্য:",
+                "User ID:": "ব্যবহারকারী আইডি:",
+                "Submitted Date:": "জমা দেওয়ার তারিখ:",
+                "View Details": "বিস্তারিত দেখুন",
+                "Are you sure you want to delete this user?": "আপনি কি নিশ্চিত যে আপনি এই ব্যবহারকারীকে মুছতে চান?",
+                "Are you sure you want to delete this application?": "আপনি কি নিশ্চিত যে আপনি এই আবেদনটি মুছতে চান?",
+                "Application Details:": "আবেদনের বিস্তারিত:"
+            }
+        };
+
+        // Apply translation on page load
+        window.addEventListener('load', function() {
+            const savedLanguage = localStorage.getItem('selectedLanguage');
+            if (savedLanguage && savedLanguage !== 'en') {
+                setTimeout(() => {
+                    applyTranslation(savedLanguage);
+                }, 100);
+            }
+        });
+
+        // Function to apply translation
+        function applyTranslation(language) {
+            if (language === 'en') return;
+
+            const langTranslations = translations[language];
+            if (!langTranslations) return;
+
+            // Translate all text content on the page
+            const elements = document.querySelectorAll('*');
+            elements.forEach(element => {
+                if (element.children.length === 0 && element.textContent.trim()) {
+                    const originalText = element.textContent.trim();
+                    if (langTranslations[originalText]) {
+                        element.textContent = langTranslations[originalText];
+                    }
+                }
+            });
+
+            // Translate input placeholders
+            const inputs = document.querySelectorAll('input[placeholder]');
+            inputs.forEach(input => {
+                const placeholder = input.getAttribute('placeholder');
+                if (langTranslations[placeholder]) {
+                    input.setAttribute('placeholder', langTranslations[placeholder]);
+                }
+            });
+
+            // Translate button values
+            const buttons = document.querySelectorAll('button, input[type="submit"]');
+            buttons.forEach(button => {
+                const value = button.value || button.textContent;
+                if (langTranslations[value]) {
+                    if (button.tagName === 'INPUT') {
+                        button.value = langTranslations[value];
+                    } else {
+                        button.textContent = langTranslations[value];
+                    }
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>

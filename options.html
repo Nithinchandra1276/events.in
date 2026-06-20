@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Command Center</title>
+  <meta name="description" content="Central command center for event-service operations, planning, analytics, and final review execution." />
+  <link rel="stylesheet" href="professional-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #061826;
+      --bg-mid: #0b2b3d;
+      --panel: rgba(255, 255, 255, 0.95);
+      --line: rgba(8, 45, 58, 0.14);
+      --primary: #0f9d8f;
+      --primary-dark: #0a7f74;
+      --accent: #ff8a3d;
+      --text: #122531;
+      --muted: #4d6876;
+      --ok: #1f9d55;
+      --warn: #cc8a00;
+      --danger: #c0392b;
+      --radius: 18px;
+      --shadow: 0 20px 45px rgba(4, 28, 44, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Manrope", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background:
+        radial-gradient(900px 400px at 10% -5%, rgba(255, 138, 61, 0.23), transparent 55%),
+        radial-gradient(800px 450px at 105% 10%, rgba(15, 157, 143, 0.3), transparent 50%),
+        linear-gradient(145deg, var(--bg-deep), var(--bg-mid));
+      padding: 20px;
+    }
+
+    .shell {
+      width: min(1300px, 100%);
+      margin: 0 auto;
+      animation: rise 0.5s ease;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .topbar {
+      display: flex;
+      gap: 14px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 18px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      margin-bottom: 18px;
+    }
+
+    .brand h1 {
+      font-family: "Space Grotesk", sans-serif;
+      color: #f4feff;
+      font-size: clamp(22px, 3vw, 34px);
+      letter-spacing: 0.4px;
+    }
+
+    .brand p {
+      color: #cce8eb;
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(130deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(15, 157, 143, 0.25);
+    }
+
+    .btn-soft {
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: #ffe2de;
+      color: var(--danger);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .panel-head h2 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 20px;
+    }
+
+    .panel-body {
+      padding: 16px 18px 18px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .kpi {
+      background: #f4fafb;
+      border: 1px solid #d9eef0;
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .kpi .value {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 26px;
+      color: var(--primary-dark);
+    }
+
+    .kpi .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+      font-weight: 700;
+    }
+
+    .tool-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .field,
+    select {
+      width: 100%;
+      border: 2px solid #d8e9ee;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      padding: 10px 11px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .field:focus,
+    select:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(190px, 1fr));
+      gap: 11px;
+    }
+
+    .module-card {
+      border: 1px solid #d8ecec;
+      background: linear-gradient(150deg, #ffffff, #f2fbfa);
+      border-radius: 14px;
+      padding: 14px;
+      text-decoration: none;
+      color: var(--text);
+      min-height: 150px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .module-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 30px rgba(9, 58, 74, 0.14);
+    }
+
+    .chip {
+      width: fit-content;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #e4f7f4;
+      color: #0d6b62;
+    }
+
+    .module-card h3 {
+      font-size: 16px;
+      margin-top: 8px;
+      margin-bottom: 6px;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .module-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .module-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #1f5569;
+      font-weight: 700;
+    }
+
+    .side-stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .progress-wrap {
+      margin-top: 8px;
+      margin-bottom: 12px;
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #dbeef0;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--accent), #f7b145);
+      transition: width 0.25s ease;
+    }
+
+    .checklist {
+      list-style: none;
+      display: grid;
+      gap: 9px;
+    }
+
+    .checklist li {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: #f7fbfd;
+      border: 1px solid #deedf3;
+      padding: 9px 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #28404b;
+    }
+
+    .checklist input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--primary);
+    }
+
+    .notes {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border: 2px solid #d6e9ef;
+      border-radius: 12px;
+      padding: 10px;
+      font-family: inherit;
+    }
+
+    .activity {
+      display: grid;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .event {
+      border-left: 3px solid var(--primary);
+      background: #f2f9fb;
+      border-radius: 10px;
+      padding: 9px 10px;
+    }
+
+    .event .time {
+      font-size: 11px;
+      color: #4c6977;
+      font-weight: 700;
+    }
+
+    .event .msg {
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .status-ok {
+      color: var(--ok);
+      font-weight: 800;
+    }
+
+    .status-warn {
+      color: var(--warn);
+      font-weight: 800;
+    }
+
+    .status-danger {
+      color: var(--danger);
+      font-weight: 800;
+    }
+
+    .foot {
+      color: #cde7ea;
+      text-align: center;
+      margin-top: 14px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .brief-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 0.9fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .brief-fields {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .brief-fields .full {
+      grid-column: 1 / -1;
+    }
+
+    .brief-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .insight-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .mini-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(90px, 1fr));
+      gap: 10px;
+    }
+
+    .mini-kpi {
+      border: 1px solid #dbecee;
+      border-radius: 14px;
+      background: #f5fbfc;
+      padding: 12px;
+    }
+
+    .mini-kpi .value {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 24px;
+      color: var(--primary-dark);
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.2;
+    }
+
+    .mini-kpi .value-sm {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+      margin-top: 2px;
+    }
+
+    .mini-kpi .label {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .insight-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .insight-item {
+      border: 1px solid #d7eced;
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+      background: #fbfdfd;
+      padding: 11px 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #26414c;
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .module-grid {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+      }
+
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      }
+
+      .tool-row {
+        grid-template-columns: 1fr;
+      }
+
+      .brief-grid,
+      .brief-fields,
+      .mini-kpis {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 580px) {
+      body {
+        padding: 12px;
+      }
+
+      .topbar {
+        padding: 14px;
+      }
+
+      .module-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-head,
+      .panel-body {
+        padding: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Event-Service Command Center</h1>
+        <p id="welcomeText">Final review dashboard for planning, execution, services, and reporting.</p>
+      </div>
+      <div class="top-actions">
+        <button id="newSessionBtn" class="btn btn-soft" type="button">New Session</button>
+        <button id="adminPanelBtn" class="btn btn-primary" type="button">Admin Panel</button>
+        <button id="logoutBtn" class="btn btn-danger" type="button">Logout</button>
+      </div>
+    </header>
+
+    <section class="panel" style="margin-bottom:18px;">
+      <div class="panel-head">
+        <h2>Project Brief</h2>
+        <span id="profileStatus" class="status-ok">Profile synced</span>
+      </div>
+      <div class="panel-body brief-grid">
+        <div>
+          <div class="brief-fields">
+            <input id="profileProjectName" class="field" type="text" placeholder="Project name" />
+            <input id="profileClientName" class="field" type="text" placeholder="Client or review board" />
+            <input id="profileVenue" class="field" type="text" placeholder="Venue" />
+            <input id="profileEventDate" class="field" type="date" />
+            <input id="profileOwner" class="field" type="text" placeholder="Project owner" />
+            <input id="profileBudget" class="field" type="number" min="0" step="0.01" placeholder="Budget target" />
+            <select id="profilePriority" class="field">
+              <option value="low">Priority: Low</option>
+              <option value="medium">Priority: Medium</option>
+              <option value="high">Priority: High</option>
+              <option value="critical">Priority: Critical</option>
+            </select>
+          </div>
+          <textarea id="profileNotes" class="notes" placeholder="Capture client expectations, venue constraints, and demo goals."></textarea>
+          <div class="brief-actions">
+            <button id="saveProfileBtn" class="btn btn-primary" type="button">Save Project Profile</button>
+            <button id="generatePlanBtn" class="btn btn-soft" type="button">Refresh Action Plan</button>
+          </div>
+        </div>
+
+        <div class="insight-stack">
+          <div class="mini-kpis">
+            <div class="mini-kpi">
+              <div id="briefBudget" class="value">INR 0</div>
+              <div class="label">Budget Target</div>
+            </div>
+            <div class="mini-kpi">
+              <div id="briefOwner" class="value-sm">-</div>
+              <div class="label">Delivery Owner</div>
+            </div>
+          </div>
+          <div>
+            <h3 style="font-size:16px;margin-bottom:10px;color:#173742;">Executive Action Plan</h3>
+            <div id="actionPlanList" class="insight-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Project Modules</h2>
+          <span id="moduleCountInfo" class="status-ok">0 modules visible</span>
+        </div>
+        <div class="panel-body">
+          <div class="kpi-grid">
+            <div class="kpi">
+              <div id="kpiUsers" class="value">0</div>
+              <div class="label">Registered Users</div>
+            </div>
+            <div class="kpi">
+              <div id="kpiApplications" class="value">0</div>
+              <div class="label">Service Applications</div>
+            </div>
+            <div class="kpi">
+              <div id="kpiModules" class="value">0</div>
+              <div class="label">Active Modules</div>
+            </div>
+            <div class="kpi">
+              <div id="kpiReadiness" class="value">0%</div>
+              <div class="label">Review Readiness</div>
+            </div>
+          </div>
+
+          <div class="tool-row">
+            <input id="searchInput" class="field" type="search" placeholder="Search modules, like analytics, planner, AI, service..." />
+            <select id="categorySelect" aria-label="Filter by category">
+              <option value="all">All Categories</option>
+              <option value="core">Core</option>
+              <option value="planning">Planning</option>
+              <option value="service">Services</option>
+              <option value="reporting">Reporting</option>
+            </select>
+            <select id="statusSelect" aria-label="Filter by status">
+              <option value="all">All Status</option>
+              <option value="ready">Ready</option>
+            </select>
+          </div>
+
+          <div id="moduleGrid" class="module-grid"></div>
+        </div>
+      </article>
+
+      <aside class="side-stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Final Review Tracker</h2>
+            <span id="progressText" class="status-warn">0 / 0 complete</span>
+          </div>
+          <div class="panel-body">
+            <div class="progress-wrap"><div id="progressBar" class="progress-bar"></div></div>
+            <ul id="reviewChecklist" class="checklist"></ul>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Quick Notes</h2>
+            <button id="saveNoteBtn" class="btn btn-primary" type="button">Save</button>
+          </div>
+          <div class="panel-body">
+            <textarea id="reviewNotes" class="notes" placeholder="Write key points for your college final review presentation..."></textarea>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Live Activity</h2>
+            <button id="clearActivityBtn" class="btn btn-soft" type="button">Clear</button>
+          </div>
+          <div class="panel-body">
+            <div id="activityFeed" class="activity"></div>
+          </div>
+        </section>
+      </aside>
+    </section>
+
+    <p class="foot">Built for final college review: multi-module, interactive, and data-driven.</p>
+  </main>
+
+  <!-- Admin Password Modal -->
+  <div id="adminModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(4,24,44,0.72);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:20px;padding:36px 32px 28px;width:min(420px,92vw);box-shadow:0 32px 64px rgba(0,0,0,0.35);animation:rise 0.28s ease;">
+      <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;color:#0d2a45;margin-bottom:6px;">Admin Access</h2>
+      <p style="font-size:13px;color:#4d6876;margin-bottom:22px;line-height:1.6;">Enter the admin password to access the control panel.</p>
+      <label style="display:block;font-size:12.5px;font-weight:700;color:#304c64;margin-bottom:6px;letter-spacing:0.04em;">ADMIN PASSWORD</label>
+      <div style="position:relative;margin-bottom:6px;">
+        <input id="adminModalPassword" type="password" placeholder="Enter admin password" autocomplete="current-password"
+          style="width:100%;border:1.5px solid #cdd8ea;border-radius:11px;padding:12px 48px 12px 14px;font-size:14px;color:#0f2840;background:#f5fafd;font-family:inherit;box-sizing:border-box;transition:border-color 0.2s,box-shadow 0.2s;" />
+        <button type="button" id="adminModalEye"
+          style="position:absolute;top:50%;right:9px;transform:translateY(-50%);border:none;border-radius:8px;width:34px;height:34px;background:linear-gradient(135deg,#0a7f74,#2150aa);color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">👁️</button>
+      </div>
+      <div id="adminModalError" style="min-height:18px;font-size:12.5px;font-weight:700;color:#c0392b;margin-bottom:14px;"></div>
+      <div style="display:flex;gap:10px;">
+        <button id="adminModalConfirm" type="button"
+          style="flex:1;border:none;border-radius:12px;padding:13px;background:linear-gradient(135deg,#0a7f74,#2150aa);color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 8px 20px rgba(33,80,170,0.28);transition:transform 0.18s,box-shadow 0.18s;">Enter Admin Panel</button>
+        <button id="adminModalCancel" type="button"
+          style="flex:0 0 90px;border:1.5px solid #cdd8ea;border-radius:12px;padding:13px;background:#f5fafd;color:#4d6876;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app-shared.js"></script>
+  <script>
+    const currentUser = AppShared.getCurrentUser();
+
+    const moduleCatalog = [
+      {
+        title: "AI Event Designer",
+        description: "Create stage layouts with LED and sound presets using AI prompt generation.",
+        category: "core",
+        status: "ready",
+        level: "Advanced",
+        href: "option1.html"
+      },
+      {
+        title: "Service Operations",
+        description: "Apply for loans and government schemes with guided assistant workflows.",
+        category: "service",
+        status: "ready",
+        level: "Advanced",
+        href: "option2.html"
+      },
+      {
+        title: "Analytics Dashboard",
+        description: "View readiness score, project KPIs, activity health, and final review insights in one dashboard.",
+        category: "reporting",
+        status: "ready",
+        level: "Insight",
+        href: "analytics.html"
+      },
+      {
+        title: "Event Planner Workspace",
+        description: "Manage venue details, budget, milestones, tasks, and risk tracking for event execution.",
+        category: "planning",
+        status: "ready",
+        level: "Planning",
+        href: "planner.html"
+      },
+      {
+        title: "Approvals Dashboard",
+        description: "Professional approval management for service and event applications with status tracking and action controls.",
+        category: "reporting",
+        status: "ready",
+        level: "Admin",
+        href: "approvals.html"
+      }
+    ];
+
+    const checklistItems = [
+      "Login and user management tested",
+      "AI stage generation demo prepared",
+      "Service application flow validated",
+      "Admin panel data review completed",
+      "Analytics screenshots captured",
+      "Final PPT and report ready"
+    ];
+
+    const moduleGrid = document.getElementById("moduleGrid");
+    const moduleCountInfo = document.getElementById("moduleCountInfo");
+    const reviewChecklist = document.getElementById("reviewChecklist");
+    const progressText = document.getElementById("progressText");
+    const progressBar = document.getElementById("progressBar");
+    const reviewNotes = document.getElementById("reviewNotes");
+    const activityFeed = document.getElementById("activityFeed");
+    const profileProjectName = document.getElementById("profileProjectName");
+    const profileClientName = document.getElementById("profileClientName");
+    const profileVenue = document.getElementById("profileVenue");
+    const profileEventDate = document.getElementById("profileEventDate");
+    const profileOwner = document.getElementById("profileOwner");
+    const profileBudget = document.getElementById("profileBudget");
+    const profilePriority = document.getElementById("profilePriority");
+    const profileNotes = document.getElementById("profileNotes");
+    const profileStatus = document.getElementById("profileStatus");
+    const briefBudget = document.getElementById("briefBudget");
+    const briefOwner = document.getElementById("briefOwner");
+    const actionPlanList = document.getElementById("actionPlanList");
+    const checklistTotal = checklistItems.length;
+
+    const searchInput = document.getElementById("searchInput");
+    const categorySelect = document.getElementById("categorySelect");
+    const statusSelect = document.getElementById("statusSelect");
+
+    const kpiUsers = document.getElementById("kpiUsers");
+    const kpiApplications = document.getElementById("kpiApplications");
+    const kpiModules = document.getElementById("kpiModules");
+    const kpiReadiness = document.getElementById("kpiReadiness");
+
+    const runtimeTranslationCache = new Map();
+    let currentLanguage = localStorage.getItem("selectedLanguage") || "en";
+    let translationInFlight = false;
+    let translationPending = false;
+
+    function shouldTranslateText(text) {
+      if (!text) return false;
+      const trimmed = text.trim();
+      if (!trimmed) return false;
+      return /[A-Za-z]/.test(trimmed);
+    }
+
+    async function translateTextRuntime(text, language) {
+      if (!shouldTranslateText(text) || language === "en") return text;
+
+      const cacheKey = language + "::" + text;
+      if (runtimeTranslationCache.has(cacheKey)) {
+        return runtimeTranslationCache.get(cacheKey);
+      }
+
+      try {
+        const response = await fetch(
+          "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=" +
+            encodeURIComponent(language) +
+            "&dt=t&q=" +
+            encodeURIComponent(text)
+        );
+        const data = await response.json();
+        const translated = Array.isArray(data?.[0]) ? data[0].map((chunk) => chunk[0]).join("") : text;
+        const finalText = translated || text;
+        runtimeTranslationCache.set(cacheKey, finalText);
+        return finalText;
+      } catch (error) {
+        return text;
+      }
+    }
+
+    async function translateElementText(element, language) {
+      const sourceText = element.dataset.originalText || element.textContent;
+      if (!element.dataset.originalText) {
+        element.dataset.originalText = sourceText;
+      }
+
+      const translated = await translateTextRuntime(sourceText, language);
+      element.textContent = translated;
+    }
+
+    async function applyTranslation(language) {
+      if (language === "en") return;
+      await AppShared.autoTranslatePage(language, { root: document.body, parallelLimit: 14 });
+    }
+
+    function scheduleTranslation() {
+      if (currentLanguage === "en") return;
+
+      if (translationInFlight) {
+        translationPending = true;
+        return;
+      }
+
+      translationInFlight = true;
+      applyTranslation(currentLanguage)
+        .catch(() => {
+          // Ignore translation failures and keep source text visible.
+        })
+        .finally(() => {
+          translationInFlight = false;
+          if (translationPending) {
+            translationPending = false;
+            scheduleTranslation();
+          }
+        });
+    }
+
+    function safeParse(key) {
+      return AppShared.readArray(key);
+    }
+
+    function addActivity(message) {
+      AppShared.addActivity(message);
+      renderActivity();
+    }
+
+    function collectProfileForm() {
+      return {
+        projectName: profileProjectName.value.trim(),
+        clientName: profileClientName.value.trim(),
+        venue: profileVenue.value.trim(),
+        eventDate: profileEventDate.value,
+        owner: profileOwner.value.trim(),
+        budget: profileBudget.value,
+        priority: profilePriority.value,
+        notes: profileNotes.value.trim()
+      };
+    }
+
+    function renderProjectBrief() {
+      const profile = AppShared.getProjectProfile();
+      const overview = AppShared.getOverview(checklistTotal);
+      const actions = AppShared.getReadinessActions(checklistTotal);
+
+      profileProjectName.value = profile.projectName || "";
+      profileClientName.value = profile.clientName || "";
+      profileVenue.value = profile.venue || "";
+      profileEventDate.value = profile.eventDate || "";
+      profileOwner.value = profile.owner || currentUser;
+      profileBudget.value = profile.budget || "";
+      profilePriority.value = profile.priority || "high";
+      profileNotes.value = profile.notes || "";
+
+      briefBudget.textContent = AppShared.formatCurrency(profile.budget || 0);
+      briefOwner.textContent = profile.owner || currentUser;
+
+      if (overview.readinessScore >= 80) {
+        profileStatus.textContent = "Presentation ready";
+        profileStatus.className = "status-ok";
+      } else if (overview.readinessScore >= 50) {
+        profileStatus.textContent = "Needs refinement";
+        profileStatus.className = "status-warn";
+      } else {
+        profileStatus.textContent = "Attention required";
+        profileStatus.className = "status-danger";
+      }
+
+      actionPlanList.innerHTML = actions
+        .map((item) => "<div class='insight-item'>" + item + "</div>")
+        .join("");
+
+      document.getElementById("welcomeText").textContent =
+        "Welcome " + currentUser + ". Present " + profile.projectName + " with a focused, review-ready story.";
+
+      scheduleTranslation();
+    }
+
+    function renderActivity() {
+      const logs = safeParse("projectActivity");
+      if (!logs.length) {
+        activityFeed.innerHTML = "<div class='event'><div class='msg'>No activity yet. Open a module to start tracking.</div></div>";
+        return;
+      }
+
+      activityFeed.innerHTML = logs
+        .map((item) =>
+          "<div class='event'><div class='time'>" + item.time + "</div><div class='msg'>" + item.msg + "</div></div>"
+        )
+        .join("");
+
+      scheduleTranslation();
+    }
+
+    function renderModules() {
+      const searchText = searchInput.value.trim().toLowerCase();
+      const category = categorySelect.value;
+      const status = statusSelect.value;
+
+      const filtered = moduleCatalog.filter((item) => {
+        const bySearch = !searchText || (item.title + " " + item.description).toLowerCase().includes(searchText);
+        const byCategory = category === "all" || item.category === category;
+        const byStatus = status === "all" || item.status === status;
+        return bySearch && byCategory && byStatus;
+      });
+
+      moduleGrid.innerHTML = filtered
+        .map((item) => {
+          const statusClass = item.status === "ready" ? "status-ok" : "status-warn";
+          const openAttr = item.href.startsWith("http") || item.href.endsWith(".md") ? " target='_blank' rel='noopener'" : "";
+          return (
+            "<a class='module-card' href='" + item.href + "'" + openAttr + " data-title='" + item.title + "'>" +
+              "<span class='chip'>" + item.category.toUpperCase() + "</span>" +
+              "<div>" +
+                "<h3>" + item.title + "</h3>" +
+                "<p>" + item.description + "</p>" +
+              "</div>" +
+              "<div class='module-meta'><span>" + item.level + "</span><span class='" + statusClass + "'>" + item.status.toUpperCase() + "</span></div>" +
+            "</a>"
+          );
+        })
+        .join("");
+
+      moduleCountInfo.textContent = filtered.length + " modules visible";
+
+      document.querySelectorAll(".module-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          const title = card.getAttribute("data-title") || "Module";
+          addActivity("Opened: " + title);
+        });
+      });
+
+      scheduleTranslation();
+    }
+
+    function renderChecklist() {
+      const saved = JSON.parse(localStorage.getItem("reviewChecklistState") || "{}");
+
+      reviewChecklist.innerHTML = checklistItems
+        .map((item, index) => {
+          const checked = saved[index] ? "checked" : "";
+          return (
+            "<li>" +
+              "<input type='checkbox' data-index='" + index + "' " + checked + " />" +
+              "<span>" + item + "</span>" +
+            "</li>"
+          );
+        })
+        .join("");
+
+      bindChecklistEvents();
+      refreshProgress();
+
+      scheduleTranslation();
+    }
+
+    function bindChecklistEvents() {
+      const boxes = reviewChecklist.querySelectorAll("input[type='checkbox']");
+      boxes.forEach((box) => {
+        box.addEventListener("change", () => {
+          const state = {};
+          boxes.forEach((b) => {
+            state[b.dataset.index] = b.checked;
+          });
+          localStorage.setItem("reviewChecklistState", JSON.stringify(state));
+          refreshProgress();
+        });
+      });
+    }
+
+    function refreshProgress() {
+      const boxes = Array.from(reviewChecklist.querySelectorAll("input[type='checkbox']"));
+      const complete = boxes.filter((box) => box.checked).length;
+      const total = boxes.length;
+      const pct = total ? Math.round((complete / total) * 100) : 0;
+
+      progressText.textContent = complete + " / " + total + " complete";
+      progressBar.style.width = pct + "%";
+
+      if (pct >= 80) {
+        progressText.className = "status-ok";
+      } else if (pct >= 40) {
+        progressText.className = "status-warn";
+      } else {
+        progressText.className = "status-danger";
+      }
+
+      kpiReadiness.textContent = pct + "%";
+      renderProjectBrief();
+    }
+
+    function updateKPIs() {
+      const overview = AppShared.getOverview(checklistTotal);
+      kpiUsers.textContent = overview.usersCount;
+      kpiApplications.textContent = overview.applicationsCount;
+      const activeModules = moduleCatalog.filter((m) => m.status === "ready").length;
+      kpiModules.textContent = activeModules;
+      kpiReadiness.textContent = overview.checklistPercent + "%";
+    }
+
+    document.getElementById("newSessionBtn").addEventListener("click", () => {
+      if (!confirm("Start a new session? This will clear filters, activity log, and review notes from this view.")) return;
+      // Reset search filters
+      searchInput.value = "";
+      categorySelect.value = "all";
+      statusSelect.value = "all";
+      // Clear activity log
+      localStorage.removeItem("projectActivity");
+      // Clear quick notes textarea (not saved value)
+      reviewNotes.value = "";
+      localStorage.removeItem("reviewNotes");
+      // Uncheck all checklist items
+      localStorage.removeItem("reviewChecklistState");
+      // Re-render everything
+      renderModules();
+      renderChecklist();
+      updateKPIs();
+      renderProjectBrief();
+      AppShared.addActivity("New session started — dashboard reset.");
+      renderActivity();
+    });
+
+    // Admin Panel — password gate
+    const adminModal = document.getElementById("adminModal");
+    const adminModalPassword = document.getElementById("adminModalPassword");
+    const adminModalError = document.getElementById("adminModalError");
+
+    function openAdminModal() {
+      adminModalPassword.value = "";
+      adminModalError.textContent = "";
+      adminModal.style.display = "flex";
+      setTimeout(() => adminModalPassword.focus(), 50);
+    }
+
+    function closeAdminModal() {
+      adminModal.style.display = "none";
+      adminModalPassword.value = "";
+      adminModalError.textContent = "";
+    }
+
+    document.getElementById("adminPanelBtn").addEventListener("click", openAdminModal);
+    document.getElementById("adminModalCancel").addEventListener("click", closeAdminModal);
+
+    // Close on backdrop click
+    adminModal.addEventListener("click", (e) => {
+      if (e.target === adminModal) closeAdminModal();
+    });
+
+    // Eye toggle inside modal
+    document.getElementById("adminModalEye").addEventListener("click", () => {
+      adminModalPassword.type = adminModalPassword.type === "password" ? "text" : "password";
+    });
+
+    function attemptAdminLogin() {
+      const pwd = adminModalPassword.value.trim();
+      if (pwd === "ADMINNANI") {
+        addActivity("Admin panel accessed.");
+        closeAdminModal();
+        window.location.href = "admin.html";
+      } else {
+        adminModalError.textContent = "Incorrect admin password. Please try again.";
+        adminModalPassword.value = "";
+        adminModalPassword.focus();
+      }
+    }
+
+    document.getElementById("adminModalConfirm").addEventListener("click", attemptAdminLogin);
+
+    adminModalPassword.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") attemptAdminLogin();
+      if (e.key === "Escape") closeAdminModal();
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      sessionStorage.removeItem("currentUser");
+      addActivity("User logged out from dashboard.");
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 150);
+    });
+
+    document.getElementById("saveNoteBtn").addEventListener("click", () => {
+      localStorage.setItem("reviewNotes", reviewNotes.value || "");
+      addActivity("Saved final review notes.");
+    });
+
+    document.getElementById("saveProfileBtn").addEventListener("click", () => {
+      const profile = collectProfileForm();
+      AppShared.saveProjectProfile(profile);
+      renderProjectBrief();
+      addActivity("Updated the project brief for " + (profile.projectName || "the current project") + ".");
+    });
+
+    document.getElementById("generatePlanBtn").addEventListener("click", () => {
+      renderProjectBrief();
+      addActivity("Refreshed the executive action plan.");
+    });
+
+    document.getElementById("clearActivityBtn").addEventListener("click", () => {
+      localStorage.removeItem("projectActivity");
+      renderActivity();
+    });
+
+    [searchInput, categorySelect, statusSelect].forEach((element) => {
+      element.addEventListener("input", renderModules);
+      element.addEventListener("change", renderModules);
+    });
+
+    reviewNotes.value = localStorage.getItem("reviewNotes") || "";
+
+    updateKPIs();
+    renderProjectBrief();
+    renderModules();
+    renderChecklist();
+    renderActivity();
+    addActivity("Opened Project Command Center.");
+
+    const savedLanguage = localStorage.getItem("selectedLanguage") || "en";
+    if (savedLanguage !== "en") {
+      currentLanguage = savedLanguage;
+      scheduleTranslation();
+    }
+  </script>
+</body>
+</html>

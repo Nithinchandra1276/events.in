@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approvals Dashboard | Event-Service Platform</title>
+    <meta name="description" content="Admin approvals dashboard for service and event applications.">
+    <link rel="stylesheet" href="professional-theme.css">
+    <style>
+        :root {
+            --bg: #eef3f7;
+            --bg-strong: #dce6ef;
+            --surface: #ffffff;
+            --border: #d3dee8;
+            --text: #112337;
+            --text-soft: #4a5f73;
+            --primary: #0f6f8e;
+            --primary-strong: #0b546f;
+            --success: #065f46;
+            --success-light: #d1fae5;
+            --danger: #991b1b;
+            --danger-light: #fee2e2;
+            --warning: #854d0e;
+            --warning-light: #fef9c3;
+            --shadow: 0 14px 30px rgba(16, 42, 64, 0.14);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            min-height: 100vh;
+            color: var(--text);
+            background: linear-gradient(145deg, var(--bg) 0%, var(--bg-strong) 100%);
+        }
+
+        .dashboard {
+            display: block;
+            padding: 20px;
+        }
+
+        .shell {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-strong) 0%, var(--primary) 100%);
+            color: #fff;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .header h2 {
+            margin-bottom: 6px;
+            font-size: 32px;
+        }
+
+        .header p {
+            opacity: 0.92;
+        }
+
+        .decision-lock {
+            margin-top: 14px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 12px;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .decision-lock input {
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+
+        .decision-lock button {
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .unlock-btn {
+            background: #16a34a;
+            color: #fff;
+        }
+
+        .lock-btn {
+            background: #b91c1c;
+            color: #fff;
+        }
+
+        .decision-state {
+            font-size: 12px;
+            opacity: 0.95;
+            margin-top: 6px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--text-soft);
+            border-radius: 999px;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 18px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .search-input,
+        .filter-select {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .stat {
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #f8fbfd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat .num {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 1000px;
+        }
+
+        th, td {
+            border-bottom: 1px solid #e5edf4;
+            padding: 10px;
+            text-align: left;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f5f8fb;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .status-badge {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .status-approved {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .status-disapproved {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        .status-pending {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+
+        .muted {
+            color: #6b7280;
+            font-size: 11px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .btns {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 7px 10px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn[disabled] {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .btn-view { background: #3b82f6; }
+        .btn-approve { background: #16a34a; }
+        .btn-disapprove { background: #dc2626; }
+
+        .empty {
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            color: #6b7280;
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: var(--shadow);
+            z-index: 2000;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 2100;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-card {
+            max-width: 720px;
+            width: 100%;
+            max-height: 85vh;
+            overflow: auto;
+            background: #fff;
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .close-btn {
+            border: none;
+            background: #e5e7eb;
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+        }
+
+        .detail-item {
+            border: 1px solid #e6ecf2;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            background: #f8fbfd;
+        }
+
+        @media (max-width: 780px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            .header h2 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="dashboard" class="dashboard">
+        <div class="shell">
+            <div class="header">
+                <h2>Approval Management</h2>
+                <p>Review and update service/event requests with tracked status and timestamps</p>
+                <div class="decision-lock">
+                    <input id="decisionPassword" type="password" placeholder="Admin password for approve/disapprove">
+                    <button id="unlockDecisionBtn" class="unlock-btn" type="button">Unlock Decisions</button>
+                    <button id="lockDecisionBtn" class="lock-btn" type="button">Lock</button>
+                </div>
+                <div id="decisionState" class="decision-state">Decision mode: VIEW ONLY (Admin unlock required)</div>
+            </div>
+
+            <div class="tabs">
+                <button id="serviceTabBtn" class="tab-btn active" type="button">Service Approvals</button>
+                <button id="eventTabBtn" class="tab-btn" type="button">Event Approvals</button>
+            </div>
+
+            <section id="servicePanel" class="panel">
+                <div class="controls">
+                    <input id="serviceSearch" class="search-input" type="text" placeholder="Search service, name, email, phone">
+                    <select id="serviceFilter" class="filter-select">
+                        <option value="all">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="disapproved">Disapproved</option>
+                    </select>
+                </div>
+
+                <div class="stats">
+                    <div class="stat"><div>Total</div><div id="serviceTotal" class="num">0</div></div>
+                    <div class="stat"><div>Approved</div><div id="serviceApproved" class="num">0</div></div>
+                    <div class="stat"><div>Pending</div><div id="servicePending" class="num">0</div></div>
+                </div>
+
+                <div id="serviceEmpty" class="empty">No service applications found.</div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Type</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="serviceTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="eventPanel" class="panel hidden">
+                <div class="controls">
+                    <input id="eventSearch" class="search-input" type="text" placeholder="Search event, location, phone">
+                    <select id="eventFilter" class="filter-select">
+                        <option value="all">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="disapproved">Disapproved</option>
+                    </select>
+                </div>
+
+                <div class="stats">
+                    <div class="stat"><div>Total</div><div id="eventTotal" class="num">0</div></div>
+                    <div class="stat"><div>Approved</div><div id="eventApproved" class="num">0</div></div>
+                    <div class="stat"><div>Pending</div><div id="eventPending" class="num">0</div></div>
+                </div>
+
+                <div id="eventEmpty" class="empty">No event applications found.</div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Date</th>
+                                <th>Location</th>
+                                <th>Phone</th>
+                                <th>Type</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div id="detailsModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3 id="detailsTitle">Application Details</h3>
+                <button id="closeModalBtn" class="close-btn" type="button">Close</button>
+            </div>
+            <div id="detailsBody" class="detail-grid"></div>
+        </div>
+    </div>
+
+    <script src="app-shared.js"></script>
+    <script>
+        const ADMIN_PASSWORD = "admin";
+        let currentServiceFilter = "all";
+        let currentEventFilter = "all";
+        let isAdminDecisionMaker = false;
+
+        function readList(key) {
+            if (window.AppShared && typeof AppShared.readArray === "function") {
+                return AppShared.readArray(key);
+            }
+            return JSON.parse(localStorage.getItem(key) || "[]");
+        }
+
+        function writeList(key, arr) {
+            if (window.AppShared && typeof AppShared.writeArray === "function") {
+                AppShared.writeArray(key, arr);
+                return;
+            }
+            localStorage.setItem(key, JSON.stringify(arr));
+        }
+
+        function addActivity(text) {
+            if (window.AppShared && typeof AppShared.addActivity === "function") {
+                AppShared.addActivity(text);
+            }
+        }
+
+        function showToast(message, bgColor, textColor) {
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.style.background = bgColor;
+            toast.style.color = textColor || "#fff";
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function ensureAdminDecisionAccess() {
+            if (isAdminDecisionMaker) return true;
+            showToast("Only admin can approve/disapprove. Unlock decision mode first.", "#fee2e2", "#991b1b");
+            return false;
+        }
+
+        function decisionStatusText() {
+            return isAdminDecisionMaker
+                ? "Decision mode: ADMIN ACTIVE (Approve/Disapprove enabled)"
+                : "Decision mode: VIEW ONLY (Admin unlock required)";
+        }
+
+        function updateDecisionStateUI() {
+            document.getElementById("decisionState").textContent = decisionStatusText();
+        }
+
+        function statusLabel(status) {
+            if (status === "approved") return "OK APPROVED";
+            if (status === "disapproved") return "NO DISAPPROVED";
+            return "PENDING";
+        }
+
+        function statusClass(status) {
+            if (status === "approved") return "status-approved";
+            if (status === "disapproved") return "status-disapproved";
+            return "status-pending";
+        }
+
+        function statusUpdatedText(item) {
+            if (!item.statusUpdatedAt) return "Not reviewed";
+            return "Updated " + new Date(item.statusUpdatedAt).toLocaleString();
+        }
+
+        function getServices() {
+            return readList("serviceApplications");
+        }
+
+        function getEvents() {
+            return readList("eventApplications");
+        }
+
+        function setServices(apps) {
+            writeList("serviceApplications", apps);
+        }
+
+        function setEvents(events) {
+            writeList("eventApplications", events);
+        }
+
+        function updateServiceStats(apps) {
+            const total = apps.length;
+            const approved = apps.filter(a => a.status === "approved").length;
+            const pending = apps.filter(a => !a.status || a.status === "pending").length;
+            document.getElementById("serviceTotal").textContent = String(total);
+            document.getElementById("serviceApproved").textContent = String(approved);
+            document.getElementById("servicePending").textContent = String(pending);
+        }
+
+        function updateEventStats(events) {
+            const total = events.length;
+            const approved = events.filter(e => e.status === "approved").length;
+            const pending = events.filter(e => !e.status || e.status === "pending").length;
+            document.getElementById("eventTotal").textContent = String(total);
+            document.getElementById("eventApproved").textContent = String(approved);
+            document.getElementById("eventPending").textContent = String(pending);
+        }
+
+        function renderServiceApplications() {
+            const apps = getServices();
+            const tbody = document.getElementById("serviceTableBody");
+            const empty = document.getElementById("serviceEmpty");
+            const search = document.getElementById("serviceSearch").value.toLowerCase();
+
+            const filtered = apps.filter(app => {
+                const status = app.status || "pending";
+                const matchesFilter = currentServiceFilter === "all" || status === currentServiceFilter;
+                const values = [app.serviceType, app.applicantName, app.applicantEmail, app.applicantPhone];
+                const matchesSearch = !search || values.some(v => String(v || "").toLowerCase().includes(search));
+                return matchesFilter && matchesSearch;
+            });
+
+            tbody.innerHTML = "";
+
+            if (!filtered.length) {
+                empty.style.display = "block";
+            } else {
+                empty.style.display = "none";
+            }
+
+            filtered.forEach(app => {
+                const realIdx = apps.indexOf(app);
+                const status = app.status || "pending";
+                const submitted = app.timestamp ? new Date(app.timestamp).toLocaleString() : "N/A";
+                const approveDisabled = !isAdminDecisionMaker ? " disabled title='Admin unlock required'" : "";
+                const disapproveDisabled = !isAdminDecisionMaker ? " disabled title='Admin unlock required'" : "";
+
+                const row = document.createElement("tr");
+                row.innerHTML = ""
+                    + "<td>" + (app.serviceType || "Service") + "</td>"
+                    + "<td>" + (app.applicantName || "N/A") + "</td>"
+                    + "<td>" + (app.applicantEmail || "N/A") + "</td>"
+                    + "<td>" + (app.applicantPhone || "N/A") + "</td>"
+                    + "<td>" + (app.applicationType || "N/A") + "</td>"
+                    + "<td>" + submitted + "</td>"
+                    + "<td><span class='status-badge " + statusClass(status) + "'>" + statusLabel(status) + "</span><span class='muted'>" + statusUpdatedText(app) + "</span></td>"
+                    + "<td><div class='btns'>"
+                    + "<button class='btn btn-view' type='button' onclick='viewServiceDetails(" + realIdx + ")'>View</button>"
+                    + (status !== "approved" ? "<button class='btn btn-approve' type='button' onclick='approveService(" + realIdx + ")'" + approveDisabled + ">Approve</button>" : "")
+                    + (status !== "disapproved" ? "<button class='btn btn-disapprove' type='button' onclick='disapproveService(" + realIdx + ")'" + disapproveDisabled + ">Disapprove</button>" : "")
+                    + "</div></td>";
+
+                tbody.appendChild(row);
+            });
+
+            updateServiceStats(apps);
+        }
+
+        function renderEventApplications() {
+            const events = getEvents();
+            const tbody = document.getElementById("eventTableBody");
+            const empty = document.getElementById("eventEmpty");
+            const search = document.getElementById("eventSearch").value.toLowerCase();
+
+            const filtered = events.filter(evt => {
+                const status = evt.status || "pending";
+                const matchesFilter = currentEventFilter === "all" || status === currentEventFilter;
+                const values = [evt.eventName, evt.eventLocation, evt.eventPhone, evt.eventDate, evt.eventType];
+                const matchesSearch = !search || values.some(v => String(v || "").toLowerCase().includes(search));
+                return matchesFilter && matchesSearch;
+            });
+
+            tbody.innerHTML = "";
+
+            if (!filtered.length) {
+                empty.style.display = "block";
+            } else {
+                empty.style.display = "none";
+            }
+
+            filtered.forEach(evt => {
+                const realIdx = events.indexOf(evt);
+                const status = evt.status || "pending";
+                const submitted = evt.timestamp ? new Date(evt.timestamp).toLocaleString() : "N/A";
+                const eventType = evt.eventType === "led_only" ? "LED" : evt.eventType === "sound_only" ? "Sound" : "LED + Sound";
+                const approveDisabled = !isAdminDecisionMaker ? " disabled title='Admin unlock required'" : "";
+                const disapproveDisabled = !isAdminDecisionMaker ? " disabled title='Admin unlock required'" : "";
+
+                const row = document.createElement("tr");
+                row.innerHTML = ""
+                    + "<td>" + (evt.eventName || "Event") + "</td>"
+                    + "<td>" + (evt.eventDate || "N/A") + "</td>"
+                    + "<td>" + (evt.eventLocation || "N/A") + "</td>"
+                    + "<td>" + (evt.eventPhone || "N/A") + "</td>"
+                    + "<td>" + eventType + "</td>"
+                    + "<td>" + submitted + "</td>"
+                    + "<td><span class='status-badge " + statusClass(status) + "'>" + statusLabel(status) + "</span><span class='muted'>" + statusUpdatedText(evt) + "</span></td>"
+                    + "<td><div class='btns'>"
+                    + "<button class='btn btn-view' type='button' onclick='viewEventDetails(" + realIdx + ")'>View</button>"
+                    + (status !== "approved" ? "<button class='btn btn-approve' type='button' onclick='approveEvent(" + realIdx + ")'" + approveDisabled + ">Approve</button>" : "")
+                    + (status !== "disapproved" ? "<button class='btn btn-disapprove' type='button' onclick='disapproveEvent(" + realIdx + ")'" + disapproveDisabled + ">Disapprove</button>" : "")
+                    + "</div></td>";
+
+                tbody.appendChild(row);
+            });
+
+            updateEventStats(events);
+        }
+
+        function approveService(idx) {
+            if (!ensureAdminDecisionAccess()) return;
+            const apps = getServices();
+            if (!apps[idx]) return;
+            if (!confirm("Approve \"" + (apps[idx].applicantName || "this service request") + "\"?")) return;
+            apps[idx].status = "approved";
+            apps[idx].statusUpdatedAt = new Date().toISOString();
+            setServices(apps);
+            addActivity("Approved service: " + (apps[idx].applicantName || "Unknown"));
+            renderServiceApplications();
+            showToast("Service request approved.", "#d1fae5", "#065f46");
+        }
+
+        function disapproveService(idx) {
+            if (!ensureAdminDecisionAccess()) return;
+            const apps = getServices();
+            if (!apps[idx]) return;
+            if (!confirm("Disapprove \"" + (apps[idx].applicantName || "this service request") + "\"?")) return;
+            apps[idx].status = "disapproved";
+            apps[idx].statusUpdatedAt = new Date().toISOString();
+            setServices(apps);
+            addActivity("Disapproved service: " + (apps[idx].applicantName || "Unknown"));
+            renderServiceApplications();
+            showToast("Service request disapproved.", "#fee2e2", "#991b1b");
+        }
+
+        function approveEvent(idx) {
+            if (!ensureAdminDecisionAccess()) return;
+            const events = getEvents();
+            if (!events[idx]) return;
+            if (!confirm("Approve \"" + (events[idx].eventName || "this event request") + "\"?")) return;
+            events[idx].status = "approved";
+            events[idx].statusUpdatedAt = new Date().toISOString();
+            setEvents(events);
+            addActivity("Approved event: " + (events[idx].eventName || "Unknown"));
+            renderEventApplications();
+            showToast("Event request approved.", "#d1fae5", "#065f46");
+        }
+
+        function disapproveEvent(idx) {
+            if (!ensureAdminDecisionAccess()) return;
+            const events = getEvents();
+            if (!events[idx]) return;
+            if (!confirm("Disapprove \"" + (events[idx].eventName || "this event request") + "\"?")) return;
+            events[idx].status = "disapproved";
+            events[idx].statusUpdatedAt = new Date().toISOString();
+            setEvents(events);
+            addActivity("Disapproved event: " + (events[idx].eventName || "Unknown"));
+            renderEventApplications();
+            showToast("Event request disapproved.", "#fee2e2", "#991b1b");
+        }
+
+        function objectToDetailItems(obj) {
+            const keys = Object.keys(obj || {});
+            if (!keys.length) return "<div class='detail-item'>No details available.</div>";
+            return keys.map(key => {
+                const label = key.replace(/([A-Z])/g, " $1").replace(/^./, s => s.toUpperCase());
+                const value = obj[key] == null || obj[key] === "" ? "N/A" : String(obj[key]);
+                return "<div class='detail-item'><strong>" + label + ":</strong><br>" + value + "</div>";
+            }).join("");
+        }
+
+        function openDetails(title, html) {
+            document.getElementById("detailsTitle").textContent = title;
+            document.getElementById("detailsBody").innerHTML = html;
+            document.getElementById("detailsModal").classList.add("show");
+        }
+
+        function closeDetails() {
+            document.getElementById("detailsModal").classList.remove("show");
+        }
+
+        function viewServiceDetails(idx) {
+            const apps = getServices();
+            if (!apps[idx]) return;
+            openDetails("Service Request Details", objectToDetailItems(apps[idx]));
+        }
+
+        function viewEventDetails(idx) {
+            const events = getEvents();
+            if (!events[idx]) return;
+            openDetails("Event Request Details", objectToDetailItems(events[idx]));
+        }
+
+        function activateTab(type) {
+            const serviceBtn = document.getElementById("serviceTabBtn");
+            const eventBtn = document.getElementById("eventTabBtn");
+            const servicePanel = document.getElementById("servicePanel");
+            const eventPanel = document.getElementById("eventPanel");
+
+            if (type === "service") {
+                serviceBtn.classList.add("active");
+                eventBtn.classList.remove("active");
+                servicePanel.classList.remove("hidden");
+                eventPanel.classList.add("hidden");
+            } else {
+                eventBtn.classList.add("active");
+                serviceBtn.classList.remove("active");
+                eventPanel.classList.remove("hidden");
+                servicePanel.classList.add("hidden");
+            }
+        }
+
+        function unlockDecisionMode() {
+            const pwdEl = document.getElementById("decisionPassword");
+            if (pwdEl.value !== ADMIN_PASSWORD) {
+                showToast("Invalid admin password.", "#fee2e2", "#991b1b");
+                pwdEl.value = "";
+                return;
+            }
+            isAdminDecisionMaker = true;
+            sessionStorage.setItem("approvalsDecisionAdmin", "ok");
+            updateDecisionStateUI();
+            renderServiceApplications();
+            renderEventApplications();
+            showToast("Admin decision mode unlocked.", "#d1fae5", "#065f46");
+        }
+
+        function lockDecisionMode() {
+            isAdminDecisionMaker = false;
+            sessionStorage.removeItem("approvalsDecisionAdmin");
+            updateDecisionStateUI();
+            renderServiceApplications();
+            renderEventApplications();
+            showToast("Decision mode locked.", "#fef9c3", "#854d0e");
+        }
+
+        function bootDecisionMode() {
+            isAdminDecisionMaker = sessionStorage.getItem("approvalsDecisionAdmin") === "ok";
+            updateDecisionStateUI();
+            renderServiceApplications();
+            renderEventApplications();
+        }
+
+        document.getElementById("unlockDecisionBtn").addEventListener("click", unlockDecisionMode);
+        document.getElementById("lockDecisionBtn").addEventListener("click", lockDecisionMode);
+        document.getElementById("decisionPassword").addEventListener("keypress", function (event) {
+            if (event.key === "Enter") unlockDecisionMode();
+        });
+
+        document.getElementById("serviceTabBtn").addEventListener("click", function () {
+            activateTab("service");
+        });
+        document.getElementById("eventTabBtn").addEventListener("click", function () {
+            activateTab("event");
+        });
+
+        document.getElementById("serviceSearch").addEventListener("input", renderServiceApplications);
+        document.getElementById("eventSearch").addEventListener("input", renderEventApplications);
+
+        document.getElementById("serviceFilter").addEventListener("change", function (event) {
+            currentServiceFilter = event.target.value;
+            renderServiceApplications();
+        });
+
+        document.getElementById("eventFilter").addEventListener("change", function (event) {
+            currentEventFilter = event.target.value;
+            renderEventApplications();
+        });
+
+        document.getElementById("closeModalBtn").addEventListener("click", closeDetails);
+        document.getElementById("detailsModal").addEventListener("click", function (event) {
+            if (event.target.id === "detailsModal") closeDetails();
+        });
+
+        window.addEventListener("storage", function () {
+            renderServiceApplications();
+            renderEventApplications();
+        });
+
+        bootDecisionMode();
+    </script>
+</body>
+</html>

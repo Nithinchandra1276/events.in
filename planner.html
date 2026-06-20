@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Planner — My Planning Board</title>
+  <meta name="description" content="Simple event planning board: add tasks, track budget, set milestones, and manage risks for your event." />
+  <link rel="stylesheet" href="professional-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #072034;
+      --panel: #ffffff;
+      --line: #d6e9f0;
+      --text: #17313f;
+      --muted: #5b7785;
+      --primary: #0e8e8a;
+      --accent: #fe8d3a;
+      --ok: #11854d;
+      --danger: #b23b2f;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Manrope", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background:
+        radial-gradient(700px 320px at 0% 0%, rgba(254, 141, 58, 0.2), transparent 55%),
+        radial-gradient(800px 360px at 100% 10%, rgba(14, 142, 138, 0.22), transparent 55%),
+        linear-gradient(145deg, #071a2a, var(--bg));
+      padding: 20px;
+    }
+
+    .wrap {
+      width: min(1280px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .top {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      color: #f0fcff;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(22px, 2.8vw, 32px);
+    }
+
+    .top p {
+      color: #c8e2e8;
+      margin-top: 3px;
+      font-size: 13px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      background: #f2fdff;
+      color: #164c5a;
+      padding: 10px 13px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: linear-gradient(125deg, #0e8e8a, #0b726f);
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: #ffe7e3;
+      color: #9f2e24;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .owner-banner {
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .owner-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #fff;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .owner-info { flex: 1; }
+    .owner-name { color: #f0fcff; font-size: 16px; font-weight: 800; }
+    .owner-sub { color: #b2d9e8; font-size: 12px; margin-top: 2px; }
+
+    .how-to {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 14px;
+      padding: 14px 18px;
+    }
+
+    .how-to-title {
+      color: #f0fcff;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .how-to-steps {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .step {
+      background: rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 10px 14px;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 6px;
+    }
+
+    .step-text { color: #d9edf5; font-size: 12px; line-height: 1.5; }
+    .step-text strong { color: #fff; display: block; font-size: 13px; margin-bottom: 2px; }
+
+    #saveToast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #0e8e8a;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    #saveToast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      box-shadow: 0 16px 30px rgba(5, 33, 43, 0.2);
+      overflow: hidden;
+    }
+
+    .head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .head h2 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 18px;
+    }
+
+    .body { padding: 14px; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .field,
+    select,
+    textarea,
+    input[type="number"] {
+      width: 100%;
+      border: 2px solid #d7eaf1;
+      border-radius: 10px;
+      padding: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .field:focus,
+    select:focus,
+    textarea:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    .task-controls {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .task-list,
+    .budget-list,
+    .milestone-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .task,
+    .budget-item,
+    .milestone-item {
+      border: 1px solid #dbe9ef;
+      border-left: 4px solid var(--primary);
+      border-radius: 11px;
+      padding: 10px;
+      background: #f8fcfe;
+      display: grid;
+      gap: 6px;
+    }
+
+    .task-top,
+    .budget-top,
+    .milestone-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      flex-wrap: wrap;
+    }
+
+    .task-meta,
+    .budget-meta,
+    .milestone-meta {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #dff6f5;
+      color: #0e6d68;
+    }
+
+    .pill-urgent { background: #ffe5d8; color: #8d3f10; }
+    .pill-done { background: #ddf8e8; color: #0f6e3a; }
+    .pill-danger { background: #ffe3df; color: #a53024; }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .small-btn {
+      border: none;
+      border-radius: 8px;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #e9f6ff;
+      color: #145272;
+    }
+
+    .small-btn.done { background: #dcf7e8; color: #106638; }
+    .small-btn.delete { background: #ffe4e0; color: #a63126; }
+
+    .summary-list {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .summary {
+      border: 1px solid #d8e8ee;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f8fcfd;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+    }
+
+    .kpi-strong { font-family: "Space Grotesk", sans-serif; font-size: 18px; }
+
+    .timeline-track {
+      height: 8px;
+      background: #d9ebf1;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .timeline-progress {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #0e8e8a, #45bfb1);
+      transition: width 0.2s ease;
+    }
+
+    .template-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .template {
+      border: 1px solid #ddebf2;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f6fcff;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .brief-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .risk-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .risk-item {
+      border: 1px solid #dbe9ef;
+      border-left: 4px solid var(--accent);
+      border-radius: 11px;
+      padding: 10px;
+      background: #f8fcfe;
+      display: grid;
+      gap: 6px;
+    }
+
+    .risk-meta {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .risk-open {
+      background: #ffe5df;
+      color: #a33226;
+    }
+
+    .risk-mitigated {
+      background: #fff1d9;
+      color: #8e5a00;
+    }
+
+    .risk-closed {
+      background: #ddf8e8;
+      color: #0f6e3a;
+    }
+
+    .danger-text { color: var(--danger); font-weight: 700; }
+    .ok-text { color: var(--ok); font-weight: 700; }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .task-controls { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <h1>My Event Planning Board</h1>
+        <p>Add tasks, set your budget, track milestones — everything saves automatically.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a class="btn" href="options.html">← Back</a>
+        <button id="seedBtn" class="btn" type="button">Load Example</button>
+        <button id="exportBtn" class="btn btn-primary" type="button">Download Report</button>
+        <button id="resetPlannerBtn" class="btn btn-danger" type="button">Clear All</button>
+      </div>
+    </header>
+
+    <div class="owner-banner">
+      <div class="owner-avatar" id="ownerAvatar">?</div>
+      <div class="owner-info">
+        <div class="owner-name" id="ownerNameDisplay">Loading...</div>
+        <div class="owner-sub">You are the plan owner — all data below belongs to you and is saved automatically in your browser.</div>
+      </div>
+    </div>
+
+    <div class="how-to">
+      <div class="how-to-title">HOW TO USE THIS PLANNER — 4 SIMPLE STEPS</div>
+      <div class="how-to-steps">
+        <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Add Tasks</strong>Fill in a task name, pick a date, choose priority, and click Add Task.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Track Budget</strong>Enter a category (like Stage or Lighting), planned and actual amounts, click Add.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Set Milestones</strong>Add major checkpoints with a target date. Advance status as you progress.</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Log Risks</strong>Note anything that could go wrong, who owns it, and how to fix it.</div></div>
+      </div>
+    </div>
+
+    <div id="saveToast">✓ Saved successfully</div>
+
+    <section class="panel">
+      <div class="head"><h2>📊 Your Project Summary</h2></div>
+      <div class="body">
+        <div class="summary-list">
+          <div class="summary"><span>Project</span><span id="plannerProjectName">-</span></div>
+          <div class="summary"><span>Venue</span><span id="plannerVenue">-</span></div>
+          <div class="summary"><span>Priority</span><span id="plannerPriority">-</span></div>
+          <div class="summary"><span>Readiness Score</span><span id="plannerReadiness" class="kpi-strong">0%</span></div>
+        </div>
+        <div id="plannerActionList" class="brief-list"></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <div class="head">
+          <h2>📋 My Tasks</h2>
+          <span id="taskCount" class="pill">0 tasks</span>
+        </div>
+        <div class="body">
+          <form id="taskForm" class="form-grid">
+            <input class="field" id="taskTitle" type="text" placeholder="What needs to be done? (e.g. Book venue)" required />
+            <input class="field" id="taskOwner" type="text" placeholder="Who is responsible?" required />
+            <input class="field" id="taskDate" type="date" required />
+            <select id="taskPriority" required>
+              <option value="normal">Priority: Normal</option>
+              <option value="urgent">Priority: Urgent</option>
+            </select>
+            <textarea id="taskNotes" class="full" rows="3" placeholder="Any extra notes? (optional)"></textarea>
+            <button class="btn btn-primary full" type="submit">✚ Add Task</button>
+          </form>
+
+          <div class="task-controls">
+            <input id="taskSearch" class="field" type="search" placeholder="Search by title or owner" />
+            <select id="taskFilterStatus">
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="done">Completed</option>
+              <option value="urgent">Urgent Pending</option>
+            </select>
+            <select id="taskSortBy">
+              <option value="date-asc">Sort by Date (Earliest)</option>
+              <option value="date-desc">Sort by Date (Latest)</option>
+              <option value="priority">Sort by Priority</option>
+            </select>
+          </div>
+
+          <div id="taskList" class="task-list"></div>
+        </div>
+      </article>
+
+      <aside style="display:grid;gap:16px;">
+        <section class="panel">
+          <div class="head"><h2>📈 Planning Summary</h2></div>
+          <div class="body">
+            <div class="summary-list">
+              <div class="summary"><span>Total Tasks</span><span id="sumTotal">0</span></div>
+              <div class="summary"><span>Completed</span><span id="sumDone">0</span></div>
+              <div class="summary"><span>Pending</span><span id="sumPending">0</span></div>
+              <div class="summary"><span>Urgent</span><span id="sumUrgent">0</span></div>
+              <div class="summary"><span>Execution Health</span><span id="sumHealth" class="kpi-strong">0%</span></div>
+            </div>
+            <p class="note">✓ All your data is saved automatically — no login or server needed. Just use the page and it remembers everything.</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="head"><h2>💰 Budget Tracker</h2></div>
+          <div class="body">
+            <form id="budgetForm" class="form-grid">
+              <input id="budgetCategory" class="field" type="text" placeholder="What is this expense? (e.g. Stage, Lighting)" required />
+              <input id="budgetPlanned" type="number" min="0" step="0.01" placeholder="Planned Amount (INR)" required />
+              <input id="budgetActual" type="number" min="0" step="0.01" placeholder="Actual Spent (INR)" required />
+              <button class="btn btn-primary full" type="submit">✚ Add Budget Item</button>
+            </form>
+
+            <div class="summary-list" style="margin-top:8px;">
+              <div class="summary"><span>Total Planned</span><span id="sumPlanned">0</span></div>
+              <div class="summary"><span>Total Actual</span><span id="sumActual">0</span></div>
+              <div class="summary"><span>Variance</span><span id="sumVariance">0</span></div>
+            </div>
+
+            <div id="budgetList" class="budget-list"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="head"><h2>🏁 Key Milestones</h2></div>
+          <div class="body">
+            <form id="milestoneForm" class="form-grid">
+              <input id="milestoneName" class="field" type="text" placeholder="Big goal or deadline (e.g. Venue Booked)" required />
+              <input id="milestoneDate" class="field" type="date" required />
+              <select id="milestoneStatus" required>
+                <option value="pending">Status: Pending</option>
+                <option value="in_progress">Status: In Progress</option>
+                <option value="done">Status: Completed</option>
+              </select>
+              <button class="btn btn-primary full" type="submit">✚ Add Milestone</button>
+            </form>
+
+            <div class="timeline-track"><div id="timelineProgress" class="timeline-progress"></div></div>
+            <div id="milestoneList" class="milestone-list"></div>
+          </div>
+        </section>
+
+        <section id="future" class="panel">
+          <div class="head"><h2>⚠️ Risks to Watch</h2></div>
+          <div class="body">
+            <form id="riskForm" class="form-grid">
+              <input id="riskTitle" class="field" type="text" placeholder="What could go wrong? (e.g. Power failure)" required />
+              <input id="riskOwner" class="field" type="text" placeholder="Who handles this risk?" required />
+              <select id="riskLevel" required>
+                <option value="medium">How serious? – Medium</option>
+                <option value="high">How serious? – High</option>
+                <option value="low">How serious? – Low</option>
+              </select>
+              <textarea id="riskMitigation" class="full" rows="3" placeholder="What is the backup plan? (e.g. Hire generator vendor)"></textarea>
+              <button class="btn btn-primary full" type="submit">✚ Add Risk</button>
+            </form>
+
+            <div class="summary-list" style="margin-top:8px;">
+              <div class="summary"><span>Open Risks</span><span id="sumRisks">0</span></div>
+              <div class="summary"><span>High Severity</span><span id="sumHighRisks">0</span></div>
+            </div>
+
+            <div id="riskList" class="risk-list"></div>
+          </div>
+        </section>
+
+        <section id="templates" class="panel">
+          <div class="head"><h2>Execution Templates</h2></div>
+          <div class="body template-list">
+            <div class="template"><strong>Conference Template:</strong> Venue setup -> Audio/visual check -> Speaker management -> Registration desk -> Live session tracking.</div>
+            <div class="template"><strong>College Fest Template:</strong> Stage design -> Student coordination -> Safety compliance -> Sponsor stalls -> Closing report.</div>
+            <div class="template"><strong>Service Camp Template:</strong> Token management -> Document verification -> Service queue handling -> Admin reporting.</div>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script src="app-shared.js"></script>
+  <script>
+    // Show owner name in banner
+    const currentOwner = AppShared.getCurrentUser() || AppShared.getProjectProfile().owner || "You";
+    document.getElementById("ownerNameDisplay").textContent = currentOwner + "'s Planning Board";
+    const avatarEl = document.getElementById("ownerAvatar");
+    avatarEl.textContent = currentOwner.charAt(0).toUpperCase() || "?";
+
+    // Toast helper
+    function showSaved(message) {
+      const toast = document.getElementById("saveToast");
+      toast.textContent = "✓ " + (message || "Saved successfully");
+      toast.classList.add("show");
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    const TASKS_KEY = "plannerTasks";
+    const BUDGET_KEY = "plannerBudget";
+    const MILESTONE_KEY = "plannerMilestones";
+    const RISK_KEY = "plannerRisks";
+
+    const taskForm = document.getElementById("taskForm");
+    const budgetForm = document.getElementById("budgetForm");
+    const milestoneForm = document.getElementById("milestoneForm");
+    const riskForm = document.getElementById("riskForm");
+
+    const taskList = document.getElementById("taskList");
+    const budgetList = document.getElementById("budgetList");
+    const milestoneList = document.getElementById("milestoneList");
+    const riskList = document.getElementById("riskList");
+
+    const taskCount = document.getElementById("taskCount");
+    const timelineProgress = document.getElementById("timelineProgress");
+
+    const taskSearch = document.getElementById("taskSearch");
+    const taskFilterStatus = document.getElementById("taskFilterStatus");
+    const taskSortBy = document.getElementById("taskSortBy");
+
+    function getData(key) {
+      return AppShared.readArray(key);
+    }
+
+    function setData(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    function formatMoney(value) {
+      return "INR " + Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    }
+
+    function renderProjectPulse() {
+      const profile = AppShared.getProjectProfile();
+      const overview = AppShared.getOverview(6);
+
+      document.getElementById("plannerProjectName").textContent = profile.projectName || "-";
+      document.getElementById("plannerVenue").textContent = profile.venue || "-";
+      document.getElementById("plannerPriority").textContent = (profile.priority || "medium").toUpperCase();
+      document.getElementById("plannerReadiness").textContent = overview.readinessScore + "%";
+      document.getElementById("plannerActionList").innerHTML = AppShared.getReadinessActions(6)
+        .map((item) => "<div class='template'>" + item + "</div>")
+        .join("");
+    }
+
+    function updateTaskSummary(tasks) {
+      const done = tasks.filter((item) => item.done).length;
+      const pending = tasks.length - done;
+      const urgent = tasks.filter((item) => item.priority === "urgent" && !item.done).length;
+      const health = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
+
+      document.getElementById("sumTotal").textContent = tasks.length;
+      document.getElementById("sumDone").textContent = done;
+      document.getElementById("sumPending").textContent = pending;
+      document.getElementById("sumUrgent").textContent = urgent;
+      document.getElementById("sumHealth").textContent = health + "%";
+      taskCount.textContent = tasks.length + " tasks";
+    }
+
+    function applyTaskQuery(tasks) {
+      const query = taskSearch.value.trim().toLowerCase();
+      const filter = taskFilterStatus.value;
+      const sort = taskSortBy.value;
+
+      let filtered = tasks.filter((task) => {
+        const bySearch = !query || (task.title + " " + task.owner + " " + (task.notes || "")).toLowerCase().includes(query);
+        const byStatus =
+          filter === "all" ||
+          (filter === "done" && task.done) ||
+          (filter === "pending" && !task.done) ||
+          (filter === "urgent" && task.priority === "urgent" && !task.done);
+        return bySearch && byStatus;
+      });
+
+      if (sort === "date-asc") {
+        filtered.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      } else if (sort === "date-desc") {
+        filtered.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+      } else if (sort === "priority") {
+        filtered.sort((a, b) => {
+          if (a.priority === b.priority) return String(a.date).localeCompare(String(b.date));
+          return a.priority === "urgent" ? -1 : 1;
+        });
+      }
+
+      return filtered;
+    }
+
+    function renderTasks() {
+      const tasks = getData(TASKS_KEY);
+      const visible = applyTaskQuery(tasks);
+
+      if (!visible.length) {
+        taskList.innerHTML = "<div class='template'>No matching tasks. Try another filter, or add new tasks.</div>";
+      } else {
+        taskList.innerHTML = visible
+          .map((task) => {
+            const priorityClass = task.priority === "urgent" ? "pill pill-urgent" : "pill";
+            const statusLabel = task.done ? "Completed" : "Pending";
+            return (
+              "<div class='task'>" +
+                "<div class='task-top'><span>" + task.title + "</span><span class='" + priorityClass + "'>" + task.priority.toUpperCase() + "</span></div>" +
+                "<div class='task-meta'><span>Owner: " + task.owner + "</span><span>Date: " + task.date + "</span><span>Status: " + statusLabel + "</span></div>" +
+                (task.notes ? "<div class='note'>" + task.notes + "</div>" : "") +
+                "<div class='actions'>" +
+                  "<button class='small-btn done' data-action='toggle' data-id='" + task.id + "'>" + (task.done ? "Mark Pending" : "Mark Done") + "</button>" +
+                  "<button class='small-btn delete' data-action='delete' data-id='" + task.id + "'>Delete</button>" +
+                "</div>" +
+              "</div>"
+            );
+          })
+          .join("");
+      }
+
+      updateTaskSummary(tasks);
+      renderProjectPulse();
+
+      const selectedLanguage = localStorage.getItem("selectedLanguage") || "en";
+      if (selectedLanguage !== "en") {
+        AppShared.autoTranslatePage(selectedLanguage, { root: document.body, parallelLimit: 14 });
+      }
+    }
+
+    function renderBudget() {
+      const budget = getData(BUDGET_KEY);
+      const totalPlanned = budget.reduce((sum, item) => sum + Number(item.planned || 0), 0);
+      const totalActual = budget.reduce((sum, item) => sum + Number(item.actual || 0), 0);
+      const variance = totalActual - totalPlanned;
+
+      document.getElementById("sumPlanned").textContent = formatMoney(totalPlanned);
+      document.getElementById("sumActual").textContent = formatMoney(totalActual);
+
+      const varianceEl = document.getElementById("sumVariance");
+      varianceEl.textContent = formatMoney(variance);
+      varianceEl.className = variance > 0 ? "danger-text" : "ok-text";
+
+      if (!budget.length) {
+        budgetList.innerHTML = "<div class='template'>No budget items yet. Add estimates to present financial planning.</div>";
+        return;
+      }
+
+      budgetList.innerHTML = budget
+        .map((item) => {
+          const v = Number(item.actual) - Number(item.planned);
+          const pill = v > 0 ? "pill pill-danger" : "pill pill-done";
+          const label = v > 0 ? "Over" : "On/Under";
+          return (
+            "<div class='budget-item'>" +
+              "<div class='budget-top'><span>" + item.category + "</span><span class='" + pill + "'>" + label + "</span></div>" +
+              "<div class='budget-meta'><span>Planned: " + formatMoney(item.planned) + "</span><span>Actual: " + formatMoney(item.actual) + "</span><span>Variance: " + formatMoney(v) + "</span></div>" +
+              "<div class='actions'><button class='small-btn delete' data-budget-delete='" + item.id + "'>Delete</button></div>" +
+            "</div>"
+          );
+        })
+        .join("");
+
+      renderProjectPulse();
+    }
+
+    function renderMilestones() {
+      const milestones = getData(MILESTONE_KEY).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      const done = milestones.filter((item) => item.status === "done").length;
+      const progress = milestones.length ? Math.round((done / milestones.length) * 100) : 0;
+      timelineProgress.style.width = progress + "%";
+
+      if (!milestones.length) {
+        milestoneList.innerHTML = "<div class='template'>No milestones yet. Add timeline points for a professional roadmap view.</div>";
+        return;
+      }
+
+      milestoneList.innerHTML = milestones
+        .map((item) => {
+          const statusClass = item.status === "done" ? "pill pill-done" : item.status === "in_progress" ? "pill" : "pill pill-urgent";
+          const statusText = item.status === "done" ? "COMPLETED" : item.status === "in_progress" ? "IN PROGRESS" : "PENDING";
+          return (
+            "<div class='milestone-item'>" +
+              "<div class='milestone-top'><span>" + item.name + "</span><span class='" + statusClass + "'>" + statusText + "</span></div>" +
+              "<div class='milestone-meta'><span>Date: " + item.date + "</span></div>" +
+              "<div class='actions'>" +
+                "<button class='small-btn done' data-milestone-toggle='" + item.id + "'>Advance Status</button>" +
+                "<button class='small-btn delete' data-milestone-delete='" + item.id + "'>Delete</button>" +
+              "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+
+      renderProjectPulse();
+    }
+
+    function renderRisks() {
+      const risks = getData(RISK_KEY);
+      const openRisks = risks.filter((item) => item.status !== "closed");
+      const highRisks = openRisks.filter((item) => item.level === "high");
+
+      document.getElementById("sumRisks").textContent = openRisks.length;
+      document.getElementById("sumHighRisks").textContent = highRisks.length;
+
+      if (!risks.length) {
+        riskList.innerHTML = "<div class='template'>No project risks tracked yet. Add risks to make planning look complete and professional.</div>";
+        renderProjectPulse();
+        return;
+      }
+
+      riskList.innerHTML = risks
+        .map((risk) => {
+          const statusClass = risk.status === "closed" ? "pill risk-closed" : risk.status === "mitigated" ? "pill risk-mitigated" : "pill risk-open";
+          return (
+            "<div class='risk-item'>" +
+              "<div class='task-top'><span>" + risk.title + "</span><span class='" + statusClass + "'>" + String(risk.status || "open").toUpperCase() + "</span></div>" +
+              "<div class='risk-meta'><span>Owner: " + risk.owner + "</span><span>Severity: " + String(risk.level || "medium").toUpperCase() + "</span></div>" +
+              (risk.mitigation ? "<div class='note'>Mitigation: " + risk.mitigation + "</div>" : "") +
+              "<div class='actions'>" +
+                "<button class='small-btn done' data-risk-toggle='" + risk.id + "'>Advance Status</button>" +
+                "<button class='small-btn delete' data-risk-delete='" + risk.id + "'>Delete</button>" +
+              "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+
+      renderProjectPulse();
+    }
+
+    function exportPlannerReport() {
+      const tasks = getData(TASKS_KEY);
+      const budget = getData(BUDGET_KEY);
+      const milestones = getData(MILESTONE_KEY);
+      const risks = getData(RISK_KEY);
+      const profile = AppShared.getProjectProfile();
+
+      const lines = [
+        "EVENT PLANNER REVIEW REPORT",
+        "Generated: " + new Date().toLocaleString(),
+        "",
+        "PROJECT PROFILE",
+        "Project: " + profile.projectName,
+        "Client: " + profile.clientName,
+        "Venue: " + profile.venue,
+        "Event Date: " + profile.eventDate,
+        "Owner: " + profile.owner,
+        "Budget Target: " + formatMoney(profile.budget),
+        "Priority: " + String(profile.priority || "medium").toUpperCase(),
+        "",
+        "TASKS",
+        ...tasks.map((t, i) => `${i + 1}. ${t.title} | Owner: ${t.owner} | Date: ${t.date} | Priority: ${t.priority} | Status: ${t.done ? "Completed" : "Pending"}`),
+        "",
+        "BUDGET",
+        ...budget.map((b, i) => `${i + 1}. ${b.category} | Planned: ${formatMoney(b.planned)} | Actual: ${formatMoney(b.actual)} | Variance: ${formatMoney(Number(b.actual) - Number(b.planned))}`),
+        "",
+        "MILESTONES",
+        ...milestones.map((m, i) => `${i + 1}. ${m.name} | Date: ${m.date} | Status: ${m.status}`),
+        "",
+        "RISKS",
+        ...risks.map((r, i) => `${i + 1}. ${r.title} | Owner: ${r.owner} | Severity: ${r.level} | Status: ${r.status} | Mitigation: ${r.mitigation || "N/A"}`),
+        "",
+        "End of report"
+      ];
+
+      const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "event-planner-review-report.txt";
+      anchor.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function addTask(event) {
+      event.preventDefault();
+      const tasks = getData(TASKS_KEY);
+      const newTask = {
+        id: Date.now().toString(),
+        title: document.getElementById("taskTitle").value.trim(),
+        owner: document.getElementById("taskOwner").value.trim() || currentOwner,
+        date: document.getElementById("taskDate").value,
+        priority: document.getElementById("taskPriority").value,
+        notes: document.getElementById("taskNotes").value.trim(),
+        done: false
+      };
+      tasks.push(newTask);
+      setData(TASKS_KEY, tasks);
+      taskForm.reset();
+      document.getElementById("taskOwner").value = currentOwner;
+      renderTasks();
+      showSaved("Task added: " + newTask.title);
+      AppShared.addActivity("Added planner task: " + newTask.title + ".");
+    }
+
+    function addBudgetItem(event) {
+      event.preventDefault();
+      const budget = getData(BUDGET_KEY);
+      const newItem = {
+        id: Date.now().toString(),
+        category: document.getElementById("budgetCategory").value.trim(),
+        planned: Number(document.getElementById("budgetPlanned").value),
+        actual: Number(document.getElementById("budgetActual").value)
+      };
+      budget.push(newItem);
+      setData(BUDGET_KEY, budget);
+      budgetForm.reset();
+      renderBudget();
+      showSaved(newItem.category + " budget saved");
+      AppShared.addActivity("Updated the planner budget with " + newItem.category + ".");
+    }
+
+    function addMilestone(event) {
+      event.preventDefault();
+      const milestones = getData(MILESTONE_KEY);
+      const newM = {
+        id: Date.now().toString(),
+        name: document.getElementById("milestoneName").value.trim(),
+        date: document.getElementById("milestoneDate").value,
+        status: document.getElementById("milestoneStatus").value
+      };
+      milestones.push(newM);
+      setData(MILESTONE_KEY, milestones);
+      milestoneForm.reset();
+      renderMilestones();
+      showSaved("Milestone saved: " + newM.name);
+      AppShared.addActivity("Added milestone: " + newM.name + ".");
+    }
+
+    function addRisk(event) {
+      event.preventDefault();
+      const risks = getData(RISK_KEY);
+      const newRisk = {
+        id: Date.now().toString(),
+        title: document.getElementById("riskTitle").value.trim(),
+        owner: document.getElementById("riskOwner").value.trim() || currentOwner,
+        level: document.getElementById("riskLevel").value,
+        mitigation: document.getElementById("riskMitigation").value.trim(),
+        status: "open"
+      };
+      risks.push(newRisk);
+      setData(RISK_KEY, risks);
+      riskForm.reset();
+      renderRisks();
+      showSaved("Risk logged: " + newRisk.title);
+      AppShared.addActivity("Tracked planning risk: " + newRisk.title + ".", "warn");
+    }
+
+    taskForm.addEventListener("submit", addTask);
+    budgetForm.addEventListener("submit", addBudgetItem);
+    milestoneForm.addEventListener("submit", addMilestone);
+    riskForm.addEventListener("submit", addRisk);
+
+    [taskSearch, taskFilterStatus, taskSortBy].forEach((el) => {
+      el.addEventListener("input", renderTasks);
+      el.addEventListener("change", renderTasks);
+    });
+
+    taskList.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const action = target.dataset.action;
+      const id = target.dataset.id;
+      if (!action || !id) return;
+
+      const tasks = getData(TASKS_KEY);
+      const index = tasks.findIndex((item) => item.id === id);
+      if (index === -1) return;
+
+      if (action === "toggle") tasks[index].done = !tasks[index].done;
+      if (action === "delete") tasks.splice(index, 1);
+
+      setData(TASKS_KEY, tasks);
+      renderTasks();
+    });
+
+    budgetList.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const id = target.dataset.budgetDelete;
+      if (!id) return;
+
+      const budget = getData(BUDGET_KEY).filter((item) => item.id !== id);
+      setData(BUDGET_KEY, budget);
+      renderBudget();
+    });
+
+    milestoneList.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const toggleId = target.dataset.milestoneToggle;
+      const deleteId = target.dataset.milestoneDelete;
+      let milestones = getData(MILESTONE_KEY);
+
+      if (toggleId) {
+        milestones = milestones.map((item) => {
+          if (item.id !== toggleId) return item;
+          if (item.status === "pending") return { ...item, status: "in_progress" };
+          if (item.status === "in_progress") return { ...item, status: "done" };
+          return { ...item, status: "pending" };
+        });
+      }
+
+      if (deleteId) {
+        milestones = milestones.filter((item) => item.id !== deleteId);
+      }
+
+      setData(MILESTONE_KEY, milestones);
+      renderMilestones();
+    });
+
+    riskList.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const toggleId = target.dataset.riskToggle;
+      const deleteId = target.dataset.riskDelete;
+      let risks = getData(RISK_KEY);
+
+      if (toggleId) {
+        risks = risks.map((item) => {
+          if (item.id !== toggleId) return item;
+          if (item.status === "open") return { ...item, status: "mitigated" };
+          if (item.status === "mitigated") return { ...item, status: "closed" };
+          return { ...item, status: "open" };
+        });
+      }
+
+      if (deleteId) {
+        risks = risks.filter((item) => item.id !== deleteId);
+      }
+
+      setData(RISK_KEY, risks);
+      renderRisks();
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", exportPlannerReport);
+
+    document.getElementById("resetPlannerBtn").addEventListener("click", () => {
+      localStorage.removeItem(TASKS_KEY);
+      localStorage.removeItem(BUDGET_KEY);
+      localStorage.removeItem(MILESTONE_KEY);
+      localStorage.removeItem(RISK_KEY);
+      renderTasks();
+      renderBudget();
+      renderMilestones();
+      renderRisks();
+      AppShared.addActivity("Reset planner workspace data.", "warn");
+    });
+
+    document.getElementById("seedBtn").addEventListener("click", () => {
+      const today = new Date();
+      const tasks = [
+        {
+          id: "t1",
+          title: "Finalize venue contract",
+          owner: "Operations Team",
+          date: today.toISOString().slice(0, 10),
+          priority: "urgent",
+          notes: "Confirm stage dimensions and power availability.",
+          done: false
+        },
+        {
+          id: "t2",
+          title: "Collect service application summary",
+          owner: "Admin Desk",
+          date: new Date(today.getTime() + 86400000).toISOString().slice(0, 10),
+          priority: "normal",
+          notes: "Export list for review committee.",
+          done: false
+        },
+        {
+          id: "t3",
+          title: "Prepare final presentation run",
+          owner: "Project Lead",
+          date: new Date(today.getTime() + 2 * 86400000).toISOString().slice(0, 10),
+          priority: "urgent",
+          notes: "Demo login, AI generator, services, admin, analytics, and planner.",
+          done: true
+        }
+      ];
+
+      const budget = [
+        { id: "b1", category: "Stage & Truss", planned: 120000, actual: 116500 },
+        { id: "b2", category: "Lighting", planned: 65000, actual: 70200 },
+        { id: "b3", category: "Digital Marketing", planned: 30000, actual: 24800 }
+      ];
+
+      const milestones = [
+        { id: "m1", name: "Venue Lock", date: today.toISOString().slice(0, 10), status: "done" },
+        { id: "m2", name: "Vendor Confirmation", date: new Date(today.getTime() + 2 * 86400000).toISOString().slice(0, 10), status: "in_progress" },
+        { id: "m3", name: "Final Dry Run", date: new Date(today.getTime() + 4 * 86400000).toISOString().slice(0, 10), status: "pending" }
+      ];
+
+      const risks = [
+        { id: "r1", title: "Power backup confirmation pending", owner: "Operations Team", level: "high", mitigation: "Secure generator vendor and backup cables.", status: "open" },
+        { id: "r2", title: "Late sponsor branding approvals", owner: "Creative Lead", level: "medium", mitigation: "Freeze banner layout 48 hours before print.", status: "mitigated" }
+      ];
+
+      setData(TASKS_KEY, tasks);
+      setData(BUDGET_KEY, budget);
+      setData(MILESTONE_KEY, milestones);
+      setData(RISK_KEY, risks);
+
+      renderTasks();
+      renderBudget();
+      renderMilestones();
+      renderRisks();
+      AppShared.addActivity("Loaded the sample planner workspace.");
+    });
+
+    // Pre-fill owner field with logged-in user on page load
+    const taskOwnerField = document.getElementById("taskOwner");
+    const riskOwnerField = document.getElementById("riskOwner");
+    if (taskOwnerField && !taskOwnerField.value) taskOwnerField.value = currentOwner;
+    if (riskOwnerField && !riskOwnerField.value) riskOwnerField.value = currentOwner;
+
+    renderProjectPulse();
+    renderTasks();
+    renderBudget();
+    renderMilestones();
+    renderRisks();
+  </script>
+</body>
+</html>
